@@ -1,8 +1,8 @@
+# v2 android fix
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import yt_dlp
 import os
-import tempfile
 
 app = Flask(__name__)
 CORS(app)
@@ -19,13 +19,27 @@ FORMAT_MAP = {
     'mp4-4k':  {'format': 'bestvideo[height<=2160]+bestaudio/best', 'ext': 'mp4', 'quality': '2160'},
 }
 
+BASE_OPTS = {
+    'quiet': True,
+    'extractor_args': {
+        'youtube': {
+            'player_client': ['android', 'web'],
+            'player_skip': ['webpage', 'config'],
+        }
+    },
+    'http_headers': {
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36',
+    },
+}
+
 @app.route('/info', methods=['GET'])
 def info():
     url = request.args.get('url')
     if not url:
         return jsonify({'error': 'No URL provided'}), 400
     try:
-        with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+        opts = dict(BASE_OPTS)
+        with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False)
             return jsonify({
                 'title': info.get('title', 'Unknown'),
@@ -49,16 +63,14 @@ def download():
     ext = fmt_info['ext']
 
     try:
-        ydl_opts = {
-            'outtmpl': os.path.join(DOWNLOAD_DIR, '%(title)s.%(ext)s'),
-            'quiet': True,
-        }
+        ydl_opts = dict(BASE_OPTS)
+        ydl_opts['outtmpl'] = os.path.join(DOWNLOAD_DIR, '%(title)s.%(ext)s')
 
         if ext in ['mp3', 'flac', 'm4a']:
             ydl_opts['format'] = 'bestaudio/best'
             ydl_opts['postprocessors'] = [{
                 'key': 'FFmpegExtractAudio',
-                'preferredcodec': ext if ext != 'flac' else 'flac',
+                'preferredcodec': ext,
                 'preferredquality': fmt_info['quality'] if fmt_info['quality'] != 'lossless' else '0',
             }]
         else:
@@ -70,7 +82,6 @@ def download():
             filename = f"{title}.{ext}"
             filepath = os.path.join(DOWNLOAD_DIR, filename)
 
-            # Find the downloaded file
             for f in os.listdir(DOWNLOAD_DIR):
                 if title[:20] in f and f.endswith(f'.{ext}'):
                     filepath = os.path.join(DOWNLOAD_DIR, f)
@@ -86,11 +97,11 @@ def download():
 
 @app.route('/ping', methods=['GET'])
 def ping():
-    return jsonify({'status': 'YouVin Server running ✅'})
+    return jsonify({'status': 'YouVin Server running v2 ✅'})
 
 if __name__ == '__main__':
     print("=" * 40)
-    print("  YouVin Download Server")
+    print("  YouVin Download Server v2")
     print("  http://localhost:5000")
     print("=" * 40)
     app.run(host='0.0.0.0', port=5000, debug=False)
