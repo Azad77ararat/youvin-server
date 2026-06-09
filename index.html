@@ -125,6 +125,7 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 #splash { position:fixed; inset:0; background:#1C1C1E; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; transition:opacity 0.5s; }
 #splash.hidden { opacity:0; pointer-events:none; }
 </style>
+<script src="https://www.paypal.com/sdk/js?client-id=EOPQXV8Ac7v3rOp7_5UpCL7gqLh7Msrmu33DkxBJSW3-xOAvcyRu4Gy68PXDDIeHdcEc5v_caZ5SpUED&currency=EUR"></script>
 </head>
 <body>
 
@@ -286,18 +287,8 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
       <div class="pp-feature">✅ Keine Werbung</div>
       <div class="pp-feature" id="pp-feature-lifetime">✅ Lebenslanger Zugang</div>
     </div>
-    <button class="pp-paypal-btn pp-btn-paypal" onclick="openPayPalLink()">
-      <span style="font-size:22px;font-weight:900;color:#003087;">Pay</span><span style="font-size:22px;font-weight:900;color:#009CDE;">Pal</span>
-    </button>
-    <button class="pp-paypal-btn pp-btn-sepa" onclick="openPayPalLink()">
-      <img src="https://www.paypalobjects.com/webstatic/de_DE/i/de-pp-logo-200px.png" style="display:none"> SEPA Lastschrift
-    </button>
-    <button class="pp-paypal-btn pp-btn-card" onclick="openPayPalLink()">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg> Debit- oder Kreditkarte
-    </button>
-    <p style="text-align:center;color:#8E8E93;font-size:13px;font-style:italic;margin:14px 0 6px;">Abgewickelt durch <span style="color:#009CDE;font-weight:700;">PayPal</span></p>
-    <p style="text-align:center;font-size:12px;color:#8E8E93;margin-bottom:12px;">🔒 Deine Zahlung wird sicher über PayPal abgewickelt.<br>Du wirst nach der Zahlung sofort freigeschaltet.</p>
-    <button class="pp-confirm-btn" onclick="confirmPayment()">Nach Zahlung: Hier klicken ✓</button>
+    <div id="paypal-button-container" style="min-height:50px;margin-bottom:12px;"></div>
+    <p style="text-align:center;color:#8E8E93;font-size:12px;margin-bottom:8px;">🔒 Deine Zahlung wird sicher über PayPal abgewickelt.<br>Du wirst nach der Zahlung sofort freigeschaltet.</p>
     <p style="text-align:center;color:rgba(142,142,147,0.6);font-size:12px;margin-top:16px;">Sichere Zahlung über PayPal</p>
   </div>
 </div>
@@ -423,6 +414,7 @@ function showPayPalScreen(plan) {
   document.getElementById('pp-feature-lifetime').style.display = isYearly ? 'none' : 'block';
   document.getElementById('paypal-screen').classList.add('show');
   window.scrollTo(0,0);
+  setTimeout(renderPayPalButtons, 200);
 }
 
 function closePayPalScreen() {
@@ -432,6 +424,39 @@ function closePayPalScreen() {
 function openPayPalLink() {
   const url = currentPlan === 'yearly' ? PAYPAL_YEARLY : PAYPAL_LIFETIME;
   window.open(url, '_blank');
+}
+
+function renderPayPalButtons() {
+  const container = document.getElementById('paypal-button-container');
+  if (!container) return;
+  container.innerHTML = '';
+  if (typeof paypal === 'undefined') {
+    container.innerHTML = '<div style="color:#FF2D55;padding:16px;text-align:center;font-size:14px;">PayPal konnte nicht geladen werden. Bitte Internet prüfen.</div>';
+    return;
+  }
+  const amount = currentPlan === 'yearly' ? '15.00' : '30.00';
+  const desc = currentPlan === 'yearly' ? 'YouVin Yearly' : 'YouVin Lifetime';
+  paypal.Buttons({
+    style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal' },
+    createOrder: function(data, actions) {
+      return actions.order.create({
+        purchase_units: [{ amount: { value: amount, currency_code: 'EUR' }, description: desc }]
+      });
+    },
+    onApprove: function(data, actions) {
+      return actions.order.capture().then(function(details) {
+        subType = currentPlan;
+        if (currentUser) { currentUser.subType = subType; localStorage.setItem('youvin_user', JSON.stringify(currentUser)); }
+        closePayPalScreen();
+        updateUI();
+        showTab('home');
+        alert(currentPlan === 'yearly' ? '✅ Yearly aktiviert! Viel Spaß!' : '✅ Lifetime aktiviert! Viel Spaß!');
+      });
+    },
+    onError: function(err) {
+      alert('Zahlung fehlgeschlagen. Bitte erneut versuchen.');
+    }
+  }).render('#paypal-button-container');
 }
 
 function openGooglePlay() {
