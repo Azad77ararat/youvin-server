@@ -13,7 +13,6 @@
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; }
 
-/* LOGIN */
 .screen { display:none; min-height:100vh; padding:20px; }
 .screen.active { display:flex; flex-direction:column; justify-content:center; }
 
@@ -35,17 +34,14 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .hint { text-align:center; color:#8E8E93; font-size:13px; margin-top:12px; }
 .toggle-link { color:#FF2D55; cursor:pointer; font-weight:600; }
 
-/* MAIN APP */
 #app-screen { display:none; flex-direction:column; min-height:100vh; }
 #app-screen.active { display:flex; }
 
 .tab-content { flex:1; overflow-y:auto; padding:20px 20px 140px; }
 .tab-pane { display:none; }
 .tab-pane.active { display:block; }
-
 .page-title { font-size:28px; font-weight:800; margin-bottom:20px; }
 
-/* BOTTOM NAV */
 .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:rgba(28,28,30,0.95); border-top:1px solid rgba(255,255,255,0.1); padding:8px 0 20px; display:flex; }
 .nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; }
 .nav-item svg { width:24px; height:24px; fill:#8E8E93; }
@@ -53,7 +49,6 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .nav-item.active svg { fill:#FF2D55; }
 .nav-item.active span { color:#FF2D55; font-weight:600; }
 
-/* DOWNLOAD TAB */
 .input-box { background:#2C2C2E; border-radius:14px; padding:4px 16px; display:flex; align-items:center; gap:10px; margin-bottom:12px; }
 .input-box input { background:none; border:none; outline:none; color:white; font-size:14px; flex:1; padding:10px 0; }
 .input-box input::placeholder { color:#8E8E93; }
@@ -68,16 +63,13 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .status-blue { color:#0A84FF; }
 .status-red { color:#FF2D55; }
 .status-orange { color:#FF9F0A; }
-
 .label { color:#AEAEB2; font-size:11px; letter-spacing:1px; margin-bottom:10px; }
 
-/* HOME */
 .empty-state { text-align:center; padding:60px 20px; }
 .empty-state svg { width:80px; height:80px; fill:rgba(255,255,255,0.15); margin-bottom:16px; }
 .empty-state p { color:rgba(255,255,255,0.4); font-size:16px; }
 
-/* SUBSCRIPTION */
-.plan-card { border-radius:16px; padding:20px; margin-bottom:12px; border:1px solid; }
+.plan-card { border-radius:16px; padding:20px; margin-bottom:12px; border:1px solid; cursor:pointer; }
 .plan-yearly { background:rgba(10,132,255,0.15); border-color:rgba(10,132,255,0.5); }
 .plan-lifetime { background:rgba(255,45,85,0.15); border-color:rgba(255,45,85,0.5); }
 .plan-title { font-size:18px; font-weight:700; margin-bottom:4px; }
@@ -85,11 +77,9 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .plan-desc { color:#8E8E93; font-size:13px; }
 .plan-btn { padding:8px 16px; border-radius:20px; border:none; font-size:12px; font-weight:600; color:white; cursor:pointer; margin-top:8px; }
 
-/* TRIAL BANNER */
 .trial-banner { background:rgba(255,159,10,0.9); border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:8px; margin-bottom:16px; cursor:pointer; }
 .trial-banner span { flex:1; font-size:12px; font-weight:600; }
 
-/* MEDIATHEK */
 .grid-covers { display:grid; grid-template-columns:1fr 1fr; gap:2px; border-radius:14px; overflow:hidden; height:180px; margin-bottom:16px; }
 .cover-box { background:#2C2C2E; display:flex; align-items:center; justify-content:center; }
 .cover-box svg { width:40px; height:40px; fill:rgba(255,255,255,0.1); }
@@ -98,25 +88,35 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .btn-white { background:white; color:black; padding:12px 36px; border-radius:50px; border:none; font-size:16px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; }
 .btn-circle { width:46px; height:46px; background:rgba(120,120,128,0.24); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
 .btn-circle svg { width:22px; height:22px; fill:white; }
-.sub-badge { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.sub-badge { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; cursor:pointer; }
 
-/* RADIO */
 .radio-center { text-align:center; padding:80px 20px; }
-.radio-center svg { width:80px; height:80px; fill:rgba(255,255,255,0.15); margin-bottom:16px; }
-
-/* SEARCH */
 .search-box { background:#2C2C2E; border-radius:12px; padding:0 12px; display:flex; align-items:center; gap:8px; margin-bottom:16px; }
 .search-box svg { width:20px; height:20px; fill:#8E8E93; flex-shrink:0; }
 .search-box input { background:none; border:none; outline:none; color:white; font-size:16px; flex:1; padding:12px 0; }
 
-/* PAYPAL */
-#paypal-modal { display:none; position:fixed; inset:0; background:#1C1C1E; z-index:1000; flex-direction:column; }
-#paypal-modal.show { display:flex; }
-.modal-header { padding:16px 20px; display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(255,255,255,0.1); }
-.modal-close { width:32px; height:32px; background:#2C2C2E; border-radius:50%; border:none; color:white; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-#paypal-frame { flex:1; border:none; }
+/* PAYPAL SCREEN */
+#paypal-screen { display:none; position:fixed; inset:0; background:#1C1C1E; z-index:1000; overflow-y:auto; }
+#paypal-screen.show { display:block; }
+.pp-header { padding:16px 20px; display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(255,255,255,0.1); }
+.pp-close { width:32px; height:32px; background:#2C2C2E; border-radius:50%; border:none; color:white; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.pp-body { padding:24px; }
+.pp-card { background:#2C2C2E; border-radius:24px; padding:32px 24px; text-align:center; margin-bottom:24px; }
+.pp-logo { width:80px; height:80px; background:#FF2D55; border-radius:20px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; }
+.pp-logo svg { width:48px; height:48px; fill:white; }
+.pp-title { font-size:22px; font-weight:800; margin-bottom:8px; }
+.pp-desc { color:#8E8E93; font-size:14px; margin-bottom:24px; }
+.pp-price { font-size:52px; font-weight:900; margin-bottom:4px; }
+.pp-period { color:#8E8E93; font-size:14px; }
+.pp-features { background:#2C2C2E; border-radius:16px; padding:16px; margin-bottom:24px; }
+.pp-feature { padding:8px 0; font-size:14px; text-align:left; }
+.pp-paypal-btn { width:100%; padding:16px; background:#003087; border:none; border-radius:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px; }
+.pp-paypal-btn:active { opacity:0.85; }
+.pay-text { color:#009CDE; font-size:22px; font-weight:900; }
+.pal-text { color:#012169; font-size:22px; font-weight:900; }
+.pp-confirm-btn { width:100%; padding:14px; background:transparent; border:1px solid rgba(255,255,255,0.2); border-radius:14px; color:#8E8E93; font-size:14px; cursor:pointer; }
+.pp-confirm-btn:active { background:rgba(255,255,255,0.05); }
 
-/* SPLASH */
 #splash { position:fixed; inset:0; background:#1C1C1E; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; transition:opacity 0.5s; }
 #splash.hidden { opacity:0; pointer-events:none; }
 </style>
@@ -125,28 +125,23 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 
 <!-- SPLASH -->
 <div id="splash">
-  <div class="logo-box">
-    <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-  </div>
+  <div class="logo-box"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
   <div class="app-name">YouVin</div>
   <div class="app-sub">Deine Musik, überall</div>
 </div>
 
-<!-- LOGIN SCREEN -->
+<!-- LOGIN -->
 <div class="screen active" id="login-screen" style="padding:28px;">
   <div>
     <div class="logo-box"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
     <div class="app-name">YouVin</div>
-    <div class="app-sub" style="margin-bottom:40px;">Deine Musik, überall</div>
+    <div class="app-sub">Deine Musik, überall</div>
     <div class="section-title" id="auth-title">Anmelden</div>
     <div class="field"><input type="email" id="email" placeholder="E-Mail" autocomplete="email"></div>
     <div class="field"><input type="password" id="password" placeholder="Passwort (min. 6 Zeichen)" autocomplete="current-password"></div>
     <div class="error" id="auth-error"></div>
     <button class="btn btn-red" id="auth-btn" onclick="submitAuth()">Anmelden</button>
-    <p class="hint">
-      <span id="toggle-text">Noch kein Konto? </span>
-      <span class="toggle-link" onclick="toggleAuth()" id="toggle-link">Registrieren</span>
-    </p>
+    <p class="hint"><span id="toggle-text">Noch kein Konto? </span><span class="toggle-link" onclick="toggleAuth()" id="toggle-link">Registrieren</span></p>
     <p class="hint" style="margin-top:16px;">🆓 7 Tage kostenlos • €15/Jahr • €30 Lifetime</p>
   </div>
 </div>
@@ -154,34 +149,29 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 <!-- MAIN APP -->
 <div id="app-screen">
   <div class="tab-content">
-
-    <!-- Trial Banner -->
-    <div class="trial-banner" id="trial-banner" onclick="showTab('sub')" style="display:none;">
+    <div class="trial-banner" id="trial-banner" onclick="showPayPalScreen('yearly')" style="display:none;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
       <span id="trial-text">Noch 7 Tage kostenlos • Jetzt upgraden</span>
       <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
     </div>
 
-    <!-- HOME TAB -->
+    <!-- HOME -->
     <div class="tab-pane active" id="tab-home">
       <div class="page-title">Startseite</div>
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-        <p>Gehe zu Mediathek</p>
-      </div>
+      <div class="empty-state"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg><p>Gehe zu Mediathek</p></div>
     </div>
 
-    <!-- RADIO TAB -->
+    <!-- RADIO -->
     <div class="tab-pane" id="tab-radio">
       <div class="page-title">Radio</div>
       <div class="radio-center">
-        <svg viewBox="0 0 24 24"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12c0 1.1.89 2 2 2h16c1.11 0 2-.9 2-2V8c0-1.11-.89-2-2-2H7.3l8.26-3.34L14.83 1 3.24 6.15zM12 18c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-4c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg>
-        <p style="color:rgba(255,255,255,0.4);font-size:22px;font-weight:700;margin-bottom:8px;">Radio</p>
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="rgba(255,255,255,0.15)"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12c0 1.1.89 2 2 2h16c1.11 0 2-.9 2-2V8c0-1.11-.89-2-2-2H7.3l8.26-3.34L14.83 1 3.24 6.15zM12 18c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-4c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg>
+        <p style="color:rgba(255,255,255,0.4);font-size:22px;font-weight:700;margin:16px 0 8px;">Radio</p>
         <p style="color:rgba(255,255,255,0.4);">Bald verfügbar</p>
       </div>
     </div>
 
-    <!-- MEDIATHEK TAB -->
+    <!-- MEDIATHEK -->
     <div class="tab-pane" id="tab-lib">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <div style="width:36px;height:36px;background:rgba(120,120,128,0.24);border-radius:50%;display:flex;align-items:center;justify-content:center;">
@@ -200,13 +190,10 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
         <button class="btn-circle"><svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></button>
         <button class="btn-white"><svg width="20" height="20" viewBox="0 0 24 24" fill="black"><path d="M8 5v14l11-7z"/></svg> Wiedergeben</button>
       </div>
-      <div class="empty-state" style="padding:20px;">
-        <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-        <p>Keine Musik</p>
-      </div>
+      <div class="empty-state" style="padding:20px;"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg><p>Keine Musik</p></div>
     </div>
 
-    <!-- DOWNLOAD TAB -->
+    <!-- DOWNLOAD -->
     <div class="tab-pane" id="tab-dl">
       <div class="page-title">Download</div>
       <div class="label">LINK EINFÜGEN</div>
@@ -215,36 +202,28 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
         <input type="url" id="dl-url" placeholder="YouTube / SoundCloud / ..." oninput="clearDlStatus()">
       </div>
       <div id="dl-status" class="status-msg"></div>
-      <button class="btn btn-red" onclick="startDownload()" id="dl-btn">
-        ⬇ Herunterladen
-      </button>
+      <button class="btn btn-red" onclick="startDownload()" id="dl-btn">⬇ Herunterladen</button>
       <div style="height:24px;"></div>
       <div style="background:#2C2C2E;border-radius:14px;padding:20px;display:flex;align-items:center;gap:14px;margin-bottom:24px;">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="#FF2D55"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.34C18 2.54 15.46 0 12.34 0c-1.72 0-3.3.72-4.4 1.88L6 3.9 4.06 1.88C2.96.72 1.38 0-.34 0-3.46 0-6 2.54-6 5.66c0 .46.11.9.18 1.34H-8v14h28V6h-2z"/></svg>
-        <div style="flex:1;">
-          <div style="font-size:16px;font-weight:600;">Vom Gerät hinzufügen</div>
-          <div style="color:#8E8E93;font-size:13px;">MP3, M4A, FLAC, WAV</div>
-        </div>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="#FF2D55"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+        <div style="flex:1;"><div style="font-size:16px;font-weight:600;">Vom Gerät hinzufügen</div><div style="color:#8E8E93;font-size:13px;">MP3, M4A, FLAC, WAV</div></div>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="#8E8E93"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
       </div>
       <div class="label">FORMAT</div>
       <div class="format-list" id="format-list"></div>
     </div>
 
-    <!-- SEARCH TAB -->
+    <!-- SEARCH -->
     <div class="tab-pane" id="tab-search">
       <div class="page-title">Suche</div>
       <div class="search-box">
         <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         <input type="text" placeholder="Titel, Künstler...">
       </div>
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-        <p>Suche nach Musik</p>
-      </div>
+      <div class="empty-state"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><p>Suche nach Musik</p></div>
     </div>
 
-    <!-- SUBSCRIPTION TAB -->
+    <!-- SUBSCRIPTION -->
     <div class="tab-pane" id="tab-sub">
       <div class="page-title">Premium</div>
       <div style="text-align:center;margin-bottom:24px;">
@@ -256,79 +235,70 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
         <svg width="20" height="20" viewBox="0 0 24 24" fill="#30D158"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
         <span id="trial-sub-text" style="color:#30D158;font-size:15px;font-weight:600;">Noch 7 Tage kostenlos</span>
       </div>
-      <div class="plan-card plan-yearly" onclick="openPayPal('yearly')">
+      <div class="plan-card plan-yearly" onclick="showPayPalScreen('yearly')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div>
-            <div class="plan-title" style="color:#0A84FF;">📅 Yearly</div>
-            <div class="plan-desc">€1.25 pro Monat</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="plan-price" style="color:#0A84FF;">€15/Jahr</div>
-            <button class="plan-btn" style="background:#0A84FF;">Auswählen</button>
-          </div>
+          <div><div class="plan-title" style="color:#0A84FF;">📅 Yearly</div><div class="plan-desc">€1.25 pro Monat</div></div>
+          <div style="text-align:right;"><div class="plan-price" style="color:#0A84FF;">€15/Jahr</div><button class="plan-btn" style="background:#0A84FF;">Auswählen</button></div>
         </div>
       </div>
-      <div class="plan-card plan-lifetime" onclick="openPayPal('lifetime')">
+      <div class="plan-card plan-lifetime" onclick="showPayPalScreen('lifetime')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div>
-            <div class="plan-title" style="color:#FF2D55;">♾️ Lifetime</div>
-            <div class="plan-desc">Einmal zahlen, für immer hören</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="plan-price" style="color:#FF2D55;">€30</div>
-            <button class="plan-btn" style="background:#FF2D55;">Auswählen</button>
-          </div>
+          <div><div class="plan-title" style="color:#FF2D55;">♾️ Lifetime</div><div class="plan-desc">Einmal zahlen, für immer hören</div></div>
+          <div style="text-align:right;"><div class="plan-price" style="color:#FF2D55;">€30</div><button class="plan-btn" style="background:#FF2D55;">Auswählen</button></div>
         </div>
       </div>
       <p style="text-align:center;color:rgba(142,142,147,0.7);font-size:12px;margin-top:16px;">Sichere Zahlung über PayPal</p>
     </div>
-
   </div>
 
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
-    <div class="nav-item active" onclick="showTab('home')" id="nav-home">
-      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-      <span>Startseite</span>
-    </div>
-    <div class="nav-item" onclick="showTab('radio')" id="nav-radio">
-      <svg viewBox="0 0 24 24"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12c0 1.1.89 2 2 2h16c1.11 0 2-.9 2-2V8c0-1.11-.89-2-2-2H7.3l8.26-3.34L14.83 1 3.24 6.15zM12 18c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-4c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg>
-      <span>Radio</span>
-    </div>
-    <div class="nav-item" onclick="showTab('lib')" id="nav-lib">
-      <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-      <span>Mediathek</span>
-    </div>
-    <div class="nav-item" onclick="showTab('dl')" id="nav-dl">
-      <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-      <span>Download</span>
-    </div>
-    <div class="nav-item" onclick="showTab('search')" id="nav-search">
-      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-      <span>Suche</span>
-    </div>
+    <div class="nav-item active" onclick="showTab('home')" id="nav-home"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Startseite</span></div>
+    <div class="nav-item" onclick="showTab('radio')" id="nav-radio"><svg viewBox="0 0 24 24"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12c0 1.1.89 2 2 2h16c1.11 0 2-.9 2-2V8c0-1.11-.89-2-2-2H7.3l8.26-3.34L14.83 1 3.24 6.15zM12 18c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-4c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg><span>Radio</span></div>
+    <div class="nav-item" onclick="showTab('lib')" id="nav-lib"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg><span>Mediathek</span></div>
+    <div class="nav-item" onclick="showTab('dl')" id="nav-dl"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg><span>Download</span></div>
+    <div class="nav-item" onclick="showTab('search')" id="nav-search"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><span>Suche</span></div>
   </nav>
 </div>
 
-<!-- PAYPAL MODAL -->
-<div id="paypal-modal">
-  <div class="modal-header">
-    <button class="modal-close" onclick="closePayPal()">✕</button>
+<!-- PAYPAL SCREEN -->
+<div id="paypal-screen">
+  <div class="pp-header">
+    <button class="pp-close" onclick="closePayPalScreen()">✕</button>
     <span style="font-size:16px;font-weight:700;">PayPal Zahlung</span>
   </div>
-  <iframe id="paypal-frame" src="about:blank"></iframe>
+  <div class="pp-body">
+    <div class="pp-card">
+      <div class="pp-logo"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
+      <div class="pp-title" id="pp-title">YouVin Lifetime</div>
+      <div class="pp-desc" id="pp-desc">Einmalige Zahlung · Für immer</div>
+      <div class="pp-price" id="pp-price" style="color:#FF2D55;">€30</div>
+      <div class="pp-period" id="pp-period">einmalig</div>
+    </div>
+    <div class="pp-features">
+      <div class="pp-feature">✅ Unbegrenzte Downloads</div>
+      <div class="pp-feature">✅ Alle Formate: MP3, FLAC, M4A, MP4</div>
+      <div class="pp-feature">✅ Keine Werbung</div>
+      <div class="pp-feature" id="pp-feature-lifetime">✅ Lebenslanger Zugang</div>
+    </div>
+    <button class="pp-paypal-btn" onclick="openPayPalLink()">
+      <span class="pay-text">Pay</span><span class="pal-text">Pal</span>
+      <span style="color:white;font-size:16px;font-weight:700;margin-left:8px;">Jetzt bezahlen</span>
+    </button>
+    <button class="pp-confirm-btn" onclick="confirmPayment()">Nach Zahlung: Hier klicken ✓</button>
+    <p style="text-align:center;color:rgba(142,142,147,0.6);font-size:12px;margin-top:16px;">Sichere Zahlung über PayPal</p>
+  </div>
 </div>
 
 <script>
 const SERVER = 'https://youvin-server.onrender.com';
-const PAYPAL_CLIENT = 'EOPQXV8Ac7v3rOp7_5UpCL7gqLh7Msrmu33DkxBJSW3-xOAvcyRu4Gy68PXDDIeHdcEc5v_caZ5SpUED';
 
-// State
 let isRegister = false;
 let currentUser = null;
 let subType = 'free';
 let trialDays = 7;
 let selectedFormat = 'mp3-320';
+let currentPlan = 'lifetime';
 
 const formats = [
   {id:'mp3-320', label:'MP3 · 320 kbps'},
@@ -339,7 +309,9 @@ const formats = [
   {id:'mp4-4k',  label:'MP4 · 4K'},
 ];
 
-// Init
+const PAYPAL_YEARLY  = 'https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=evin7is7%40gmail.com&amount=15.00&currency_code=EUR&item_name=YouVin+Yearly';
+const PAYPAL_LIFETIME = 'https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=evin7is7%40gmail.com&amount=30.00&currency_code=EUR&item_name=YouVin+Lifetime';
+
 window.onload = () => {
   renderFormats();
   const saved = localStorage.getItem('youvin_user');
@@ -358,14 +330,10 @@ function renderFormats() {
   list.innerHTML = formats.map(f => `
     <div class="format-item ${f.id === selectedFormat ? 'selected' : ''}" onclick="selectFormat('${f.id}')">
       <span>${f.label}</span>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-function selectFormat(id) {
-  selectedFormat = id;
-  renderFormats();
-}
+function selectFormat(id) { selectedFormat = id; renderFormats(); }
 
 function toggleAuth() {
   isRegister = !isRegister;
@@ -380,26 +348,18 @@ async function submitAuth() {
   const email = document.getElementById('email').value.trim();
   const pass = document.getElementById('password').value.trim();
   const errEl = document.getElementById('auth-error');
-
   if (!email || !pass) { errEl.textContent = 'Bitte E-Mail und Passwort eingeben'; return; }
   if (pass.length < 6) { errEl.textContent = 'Passwort muss mindestens 6 Zeichen haben'; return; }
-
   document.getElementById('auth-btn').textContent = '...';
-
-  // Admin check
   if (email === 'admin@youvin.app' && pass === 'YouVin2024!') {
     currentUser = {email, subType:'admin'};
     subType = 'admin';
     localStorage.setItem('youvin_user', JSON.stringify(currentUser));
-    showApp();
-    return;
+    showApp(); return;
   }
-
-  // Simulate Firebase auth
   await new Promise(r => setTimeout(r, 800));
   currentUser = {email, subType:'free', trialDays:7};
-  subType = 'free';
-  trialDays = 7;
+  subType = 'free'; trialDays = 7;
   localStorage.setItem('youvin_user', JSON.stringify(currentUser));
   showApp();
 }
@@ -412,24 +372,20 @@ function showApp() {
 
 function updateUI() {
   const banner = document.getElementById('trial-banner');
-  const trialText = document.getElementById('trial-text');
   const badge = document.getElementById('sub-badge-lib');
-  const email = currentUser?.email || 'Issa';
-  const name = email.split('@')[0];
+  const name = (currentUser?.email || 'Issa').split('@')[0];
   document.getElementById('lib-username').textContent = name + ' ❤️';
-
   if (subType === 'free') {
     banner.style.display = 'flex';
-    trialText.textContent = `Noch ${trialDays} Tage kostenlos • Jetzt upgraden`;
-    badge.textContent = `🆓 ${trialDays}T`;
-    badge.style.background = '#FF9F0A';
+    document.getElementById('trial-text').textContent = `Noch ${trialDays} Tage kostenlos • Jetzt upgraden`;
+    document.getElementById('trial-sub-text').textContent = `Noch ${trialDays} Tage kostenlos`;
+    badge.textContent = `🆓 ${trialDays}T`; badge.style.background = '#FF9F0A';
   } else if (subType === 'yearly') {
     banner.style.display = 'none';
-    badge.textContent = '📅 Yearly';
-    badge.style.background = '#0A84FF';
-  } else if (subType === 'lifetime') {
+    badge.textContent = '📅 Yearly'; badge.style.background = '#0A84FF';
+  } else if (subType === 'lifetime' || subType === 'admin') {
     banner.style.display = 'none';
-    badge.textContent = '♾️ Lifetime';
+    badge.textContent = subType === 'admin' ? '👑 Admin' : '♾️ Lifetime';
     badge.style.background = '#FF2D55';
   }
 }
@@ -437,85 +393,70 @@ function updateUI() {
 function showTab(tab) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('tab-' + (tab === 'sub' ? 'sub' : tab)).classList.add('active');
-  const navMap = {home:'nav-home', radio:'nav-radio', lib:'nav-lib', dl:'nav-dl', search:'nav-search', sub:'nav-lib'};
+  const paneId = 'tab-' + tab;
+  if (document.getElementById(paneId)) document.getElementById(paneId).classList.add('active');
+  const navMap = {home:'nav-home',radio:'nav-radio',lib:'nav-lib',dl:'nav-dl',search:'nav-search',sub:'nav-lib'};
   if (navMap[tab]) document.getElementById(navMap[tab]).classList.add('active');
   window.scrollTo(0,0);
 }
 
-// Add sub tab
-document.getElementById('app-screen').insertAdjacentHTML('beforeend', '');
-
-function clearDlStatus() {
-  document.getElementById('dl-status').textContent = '';
+function showPayPalScreen(plan) {
+  currentPlan = plan;
+  const isYearly = plan === 'yearly';
+  document.getElementById('pp-title').textContent = isYearly ? 'YouVin Yearly' : 'YouVin Lifetime';
+  document.getElementById('pp-desc').textContent = isYearly ? '€15 pro Jahr · €1.25/Monat' : 'Einmalige Zahlung · Für immer';
+  document.getElementById('pp-price').textContent = isYearly ? '€15' : '€30';
+  document.getElementById('pp-price').style.color = isYearly ? '#0A84FF' : '#FF2D55';
+  document.getElementById('pp-period').textContent = isYearly ? 'pro Jahr' : 'einmalig';
+  document.getElementById('pp-feature-lifetime').style.display = isYearly ? 'none' : 'block';
+  document.getElementById('paypal-screen').classList.add('show');
+  window.scrollTo(0,0);
 }
+
+function closePayPalScreen() {
+  document.getElementById('paypal-screen').classList.remove('show');
+}
+
+function openPayPalLink() {
+  const url = currentPlan === 'yearly' ? PAYPAL_YEARLY : PAYPAL_LIFETIME;
+  window.open(url, '_blank');
+}
+
+function confirmPayment() {
+  if (confirm('Hast du die PayPal-Zahlung abgeschlossen?')) {
+    subType = currentPlan;
+    if (currentUser) { currentUser.subType = subType; localStorage.setItem('youvin_user', JSON.stringify(currentUser)); }
+    closePayPalScreen();
+    updateUI();
+    showTab('home');
+    alert(subType === 'yearly' ? '✅ Yearly aktiviert! Viel Spaß!' : '✅ Lifetime aktiviert! Viel Spaß!');
+  }
+}
+
+function clearDlStatus() { document.getElementById('dl-status').textContent = ''; }
 
 async function startDownload() {
   const url = document.getElementById('dl-url').value.trim();
   const statusEl = document.getElementById('dl-status');
   const btn = document.getElementById('dl-btn');
-
   if (!url) { statusEl.textContent = '⚠️ Bitte einen Link eingeben'; statusEl.className = 'status-msg status-orange'; return; }
   if (!url.startsWith('http')) { statusEl.textContent = '⚠️ Ungültiger Link'; statusEl.className = 'status-msg status-orange'; return; }
-
-  btn.textContent = '⏳ Wird heruntergeladen...';
-  btn.disabled = true;
-  statusEl.textContent = '⏳ Verbinde mit Server...';
-  statusEl.className = 'status-msg status-blue';
-
+  btn.textContent = '⏳ Wird heruntergeladen...'; btn.disabled = true;
+  statusEl.textContent = '⏳ Verbinde mit Server...'; statusEl.className = 'status-msg status-blue';
   try {
-    const res = await fetch(`${SERVER}/download`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({url, format: selectedFormat})
-    });
-
+    const res = await fetch(`${SERVER}/download`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url, format:selectedFormat})});
     if (res.ok) {
-      statusEl.textContent = '✅ Erfolgreich heruntergeladen!';
-      statusEl.className = 'status-msg status-green';
+      statusEl.textContent = '✅ Erfolgreich heruntergeladen!'; statusEl.className = 'status-msg status-green';
       document.getElementById('dl-url').value = '';
     } else {
       const err = await res.json();
-      statusEl.textContent = '❌ ' + (err.error || 'Fehler');
-      statusEl.className = 'status-msg status-red';
+      statusEl.textContent = '❌ ' + (err.error || 'Fehler'); statusEl.className = 'status-msg status-red';
     }
   } catch(e) {
-    statusEl.textContent = '❌ Server nicht erreichbar';
-    statusEl.className = 'status-msg status-red';
+    statusEl.textContent = '❌ Server nicht erreichbar'; statusEl.className = 'status-msg status-red';
   }
-
-  btn.textContent = '⬇ Herunterladen';
-  btn.disabled = false;
+  btn.textContent = '⬇ Herunterladen'; btn.disabled = false;
 }
-
-function openPayPal(plan) {
-  const amount = plan === 'yearly' ? 15 : 30;
-  const desc = plan === 'yearly' ? 'YouVin Yearly — €15/Jahr' : 'YouVin Lifetime — €30';
-  const html = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1C1C1E;font-family:-apple-system,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px}.card{background:#2C2C2E;border-radius:20px;padding:32px 24px;width:100%;max-width:400px;text-align:center}.logo{width:70px;height:70px;background:#FF2D55;border-radius:18px;font-size:36px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}h1{color:white;font-size:22px;font-weight:800;margin-bottom:6px}.desc{color:#8E8E93;font-size:15px;margin-bottom:28px}.price{color:#FF2D55;font-size:36px;font-weight:800;margin-bottom:32px}#pp{}</style></head><body><div class="card"><div class="logo">🎵</div><h1>YouVin</h1><p class="desc">${desc}</p><p class="price">€${amount}</p><div id="pp"></div></div><script src="https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT}&currency=EUR"><\/script><script>paypal.Buttons({createOrder:function(d,a){return a.order.create({purchase_units:[{amount:{value:'${amount}.00',currency_code:'EUR'},description:'${desc}'}]})},onApprove:function(d,a){return a.order.capture().then(function(det){window.parent.postMessage({type:'paypal_success',plan:'${plan}'},'*')})},onCancel:function(){window.parent.postMessage({type:'paypal_cancel'},'*')},onError:function(){window.parent.postMessage({type:'paypal_cancel'},'*')},style:{layout:'vertical',color:'gold',shape:'rect',label:'paypal'}}).render('#pp')<\/script></body></html>`;
-
-  const blob = new Blob([html], {type:'text/html'});
-  const url = URL.createObjectURL(blob);
-  document.getElementById('paypal-frame').src = url;
-  document.getElementById('paypal-modal').classList.add('show');
-}
-
-function closePayPal() {
-  document.getElementById('paypal-modal').classList.remove('show');
-  document.getElementById('paypal-frame').src = 'about:blank';
-}
-
-window.addEventListener('message', e => {
-  if (e.data.type === 'paypal_success') {
-    subType = e.data.plan;
-    if (currentUser) { currentUser.subType = subType; localStorage.setItem('youvin_user', JSON.stringify(currentUser)); }
-    closePayPal();
-    updateUI();
-    showTab('home');
-    alert(subType === 'yearly' ? '✅ Yearly aktiviert! Viel Spaß!' : '✅ Lifetime aktiviert! Viel Spaß!');
-  } else if (e.data.type === 'paypal_cancel') {
-    closePayPal();
-  }
-});
 </script>
 </body>
 </html>
