@@ -110,7 +110,12 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .pp-period { color:#8E8E93; font-size:14px; }
 .pp-features { background:#2C2C2E; border-radius:16px; padding:16px; margin-bottom:24px; }
 .pp-feature { padding:8px 0; font-size:14px; text-align:left; }
-.pp-paypal-btn { width:100%; padding:16px; background:#003087; border:none; border-radius:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px; }
+.pp-paypal-btn { width:100%; padding:18px; border:none; border-radius:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:10px; font-size:17px; font-weight:700; }
+.pp-btn-paypal { background:#F5C844; color:#003087; }
+.pp-btn-sepa { background:#F0F0F0; color:#333333; }
+.pp-btn-card { background:#2C2C2E; color:white; border:1px solid rgba(255,255,255,0.15); }
+.pp-btn-sepa { background:#F5F5F5; color:#333; }
+.pp-btn-card { background:#2C2C2E; color:white; border:1px solid rgba(255,255,255,0.15) !important; }
 .pp-paypal-btn:active { opacity:0.85; }
 .pay-text { color:#009CDE; font-size:22px; font-weight:900; }
 .pal-text { color:#012169; font-size:22px; font-weight:900; }
@@ -281,10 +286,17 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
       <div class="pp-feature">✅ Keine Werbung</div>
       <div class="pp-feature" id="pp-feature-lifetime">✅ Lebenslanger Zugang</div>
     </div>
-    <button class="pp-paypal-btn" onclick="openPayPalLink()">
-      <span class="pay-text">Pay</span><span class="pal-text">Pal</span>
-      <span style="color:white;font-size:16px;font-weight:700;margin-left:8px;">Jetzt bezahlen</span>
+    <button class="pp-paypal-btn pp-btn-paypal" onclick="openPayPalLink()">
+      <span style="font-size:22px;font-weight:900;color:#003087;">Pay</span><span style="font-size:22px;font-weight:900;color:#009CDE;">Pal</span>
     </button>
+    <button class="pp-paypal-btn pp-btn-sepa" onclick="openPayPalLink()">
+      <img src="https://www.paypalobjects.com/webstatic/de_DE/i/de-pp-logo-200px.png" style="display:none"> SEPA Lastschrift
+    </button>
+    <button class="pp-paypal-btn pp-btn-card" onclick="openPayPalLink()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg> Debit- oder Kreditkarte
+    </button>
+    <p style="text-align:center;color:#8E8E93;font-size:13px;font-style:italic;margin:14px 0 6px;">Abgewickelt durch <span style="color:#009CDE;font-weight:700;">PayPal</span></p>
+    <p style="text-align:center;font-size:12px;color:#8E8E93;margin-bottom:12px;">🔒 Deine Zahlung wird sicher über PayPal abgewickelt.<br>Du wirst nach der Zahlung sofort freigeschaltet.</p>
     <button class="pp-confirm-btn" onclick="confirmPayment()">Nach Zahlung: Hier klicken ✓</button>
     <p style="text-align:center;color:rgba(142,142,147,0.6);font-size:12px;margin-top:16px;">Sichere Zahlung über PayPal</p>
   </div>
@@ -309,8 +321,8 @@ const formats = [
   {id:'mp4-4k',  label:'MP4 · 4K'},
 ];
 
-const PAYPAL_YEARLY  = 'https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=evin7is7%40gmail.com&amount=15.00&currency_code=EUR&item_name=YouVin+Yearly';
-const PAYPAL_LIFETIME = 'https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=evin7is7%40gmail.com&amount=30.00&currency_code=EUR&item_name=YouVin+Lifetime';
+const PAYPAL_YEARLY  = 'https://paypal.me/issa477/15';
+const PAYPAL_LIFETIME = 'https://paypal.me/issa477/30';
 
 window.onload = () => {
   renderFormats();
