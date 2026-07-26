@@ -12,63 +12,50 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; }
-
 .screen { display:none; min-height:100vh; padding:20px; }
 .screen.active { display:flex; flex-direction:column; justify-content:center; }
-
 .logo-box { width:90px; height:90px; background:#FF2D55; border-radius:22px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
 .logo-box svg { width:52px; height:52px; fill:white; }
 .app-name { text-align:center; font-size:28px; font-weight:800; margin-bottom:4px; }
 .app-sub { text-align:center; color:#8E8E93; font-size:15px; margin-bottom:40px; }
-
 .section-title { font-size:24px; font-weight:700; margin-bottom:20px; }
 .field { background:#2C2C2E; border-radius:12px; padding:14px 16px; margin-bottom:12px; display:flex; align-items:center; gap:12px; }
 .field input { background:none; border:none; outline:none; color:white; font-size:16px; flex:1; }
 .field input::placeholder { color:#8E8E93; }
-
 .btn { width:100%; padding:16px; border-radius:14px; border:none; font-size:16px; font-weight:700; cursor:pointer; }
 .btn-red { background:#FF2D55; color:white; }
 .btn-red:active { opacity:0.8; }
-
 .error { color:#FF2D55; font-size:13px; margin:8px 0; }
 .hint { text-align:center; color:#8E8E93; font-size:13px; margin-top:12px; }
 .toggle-link { color:#FF2D55; cursor:pointer; font-weight:600; }
-
 #app-screen { display:none; flex-direction:column; min-height:100vh; }
 #app-screen.active { display:flex; }
-
 .tab-content { flex:1; overflow-y:auto; padding:20px 20px 140px; }
 .tab-pane { display:none; }
 .tab-pane.active { display:block; }
 .page-title { font-size:28px; font-weight:800; margin-bottom:20px; }
-
 .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:rgba(28,28,30,0.95); border-top:1px solid rgba(255,255,255,0.1); padding:8px 0 20px; display:flex; }
 .nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; }
 .nav-item svg { width:24px; height:24px; fill:#8E8E93; }
 .nav-item span { font-size:10px; color:#8E8E93; }
 .nav-item.active svg { fill:#FF2D55; }
 .nav-item.active span { color:#FF2D55; font-weight:600; }
-
 .input-box { background:#2C2C2E; border-radius:14px; padding:4px 16px; display:flex; align-items:center; gap:10px; margin-bottom:12px; }
 .input-box input { background:none; border:none; outline:none; color:white; font-size:14px; flex:1; padding:10px 0; }
 .input-box input::placeholder { color:#8E8E93; }
-
 .format-list { background:#2C2C2E; border-radius:14px; overflow:hidden; margin-top:10px; }
 .format-item { padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.06); cursor:pointer; }
 .format-item:last-child { border-bottom:none; }
 .format-item.selected::after { content:'✓'; color:#FF2D55; font-weight:700; }
-
 .status-msg { font-size:13px; font-weight:500; margin:8px 0; }
 .status-green { color:#30D158; }
 .status-blue { color:#0A84FF; }
 .status-red { color:#FF2D55; }
 .status-orange { color:#FF9F0A; }
 .label { color:#AEAEB2; font-size:11px; letter-spacing:1px; margin-bottom:10px; }
-
 .empty-state { text-align:center; padding:60px 20px; }
 .empty-state svg { width:80px; height:80px; fill:rgba(255,255,255,0.15); margin-bottom:16px; }
 .empty-state p { color:rgba(255,255,255,0.4); font-size:16px; }
-
 .plan-card { border-radius:16px; padding:20px; margin-bottom:12px; border:1px solid; cursor:pointer; }
 .plan-yearly { background:rgba(10,132,255,0.15); border-color:rgba(10,132,255,0.5); }
 .plan-lifetime { background:rgba(255,45,85,0.15); border-color:rgba(255,45,85,0.5); }
@@ -76,26 +63,56 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .plan-price { font-size:22px; font-weight:800; }
 .plan-desc { color:#8E8E93; font-size:13px; }
 .plan-btn { padding:8px 16px; border-radius:20px; border:none; font-size:12px; font-weight:600; color:white; cursor:pointer; margin-top:8px; }
-
 .trial-banner { background:rgba(255,159,10,0.9); border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:8px; margin-bottom:16px; cursor:pointer; }
 .trial-banner span { flex:1; font-size:12px; font-weight:600; }
-
-.grid-covers { display:grid; grid-template-columns:1fr 1fr; gap:2px; border-radius:14px; overflow:hidden; height:180px; margin-bottom:16px; }
-.cover-box { background:#2C2C2E; display:flex; align-items:center; justify-content:center; }
-.cover-box svg { width:40px; height:40px; fill:rgba(255,255,255,0.1); }
-.lib-title { text-align:center; font-size:22px; font-weight:700; margin-bottom:14px; }
-.play-row { display:flex; justify-content:center; gap:12px; align-items:center; margin-bottom:16px; }
-.btn-white { background:white; color:black; padding:12px 36px; border-radius:50px; border:none; font-size:16px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; }
-.btn-circle { width:46px; height:46px; background:rgba(120,120,128,0.24); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
-.btn-circle svg { width:22px; height:22px; fill:white; }
 .sub-badge { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; cursor:pointer; }
-
 .radio-center { text-align:center; padding:80px 20px; }
 .search-box { background:#2C2C2E; border-radius:12px; padding:0 12px; display:flex; align-items:center; gap:8px; margin-bottom:16px; }
 .search-box svg { width:20px; height:20px; fill:#8E8E93; flex-shrink:0; }
 .search-box input { background:none; border:none; outline:none; color:white; font-size:16px; flex:1; padding:12px 0; }
 
-/* PAYPAL SCREEN */
+/* MEDIATHEK */
+.lib-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.lib-name { font-size:22px; font-weight:800; }
+.lib-count { font-size:13px; color:#8E8E93; }
+.lib-refresh { width:36px; height:36px; background:rgba(120,120,128,0.24); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.lib-refresh svg { width:20px; height:20px; fill:white; }
+.song-list { display:flex; flex-direction:column; gap:1px; }
+.song-item { background:#2C2C2E; border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:14px; margin-bottom:8px; cursor:pointer; transition:background 0.15s; }
+.song-item:active { background:#3A3A3C; }
+.song-item.playing { background:rgba(255,45,85,0.15); border:1px solid rgba(255,45,85,0.3); }
+.song-icon { width:46px; height:46px; background:#FF2D55; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.song-icon svg { width:24px; height:24px; fill:white; }
+.song-icon.playing-icon { background:rgba(255,45,85,0.2); }
+.song-info { flex:1; min-width:0; }
+.song-title { font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
+.song-meta { font-size:11px; color:#8E8E93; }
+.song-actions { display:flex; align-items:center; gap:8px; }
+.song-del { width:30px; height:30px; background:rgba(255,59,48,0.1); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.song-del svg { width:16px; height:16px; fill:#FF3B30; }
+.song-play-btn { width:30px; height:30px; background:rgba(255,255,255,0.1); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.song-play-btn svg { width:16px; height:16px; fill:white; }
+
+/* MINI PLAYER */
+#mini-player { display:none; position:fixed; bottom:72px; left:12px; right:12px; background:#2C2C2E; border-radius:16px; padding:12px 16px; border:1px solid rgba(255,255,255,0.1); z-index:100; box-shadow:0 8px 32px rgba(0,0,0,0.5); }
+#mini-player.show { display:block; }
+.mp-top { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.mp-icon { width:40px; height:40px; background:#FF2D55; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.mp-icon svg { width:22px; height:22px; fill:white; }
+.mp-info { flex:1; min-width:0; }
+.mp-title { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mp-ext { font-size:11px; color:#8E8E93; }
+.mp-controls { display:flex; align-items:center; gap:8px; }
+.mp-btn { width:34px; height:34px; background:rgba(255,255,255,0.1); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.mp-btn svg { width:18px; height:18px; fill:white; }
+.mp-btn.play-pause { background:#FF2D55; width:40px; height:40px; }
+.mp-btn.play-pause svg { width:22px; height:22px; }
+.mp-close { background:none; border:none; color:#8E8E93; font-size:18px; cursor:pointer; padding:0 4px; }
+.mp-progress { width:100%; height:3px; background:rgba(255,255,255,0.1); border-radius:99px; cursor:pointer; }
+.mp-progress-fill { height:100%; background:#FF2D55; border-radius:99px; transition:width 0.3s; width:0%; }
+.mp-time { display:flex; justify-content:space-between; font-size:10px; color:#8E8E93; margin-top:4px; }
+
+/* PAYPAL */
 #paypal-screen { display:none; position:fixed; inset:0; background:#1C1C1E; z-index:1000; overflow-y:auto; }
 #paypal-screen.show { display:block; }
 .pp-header { padding:16px 20px; display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(255,255,255,0.1); }
@@ -112,15 +129,7 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .pp-feature { padding:8px 0; font-size:14px; text-align:left; }
 .pp-paypal-btn { width:100%; padding:18px; border:none; border-radius:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:10px; font-size:17px; font-weight:700; }
 .pp-btn-paypal { background:#F5C844; color:#003087; }
-.pp-btn-sepa { background:#F0F0F0; color:#333333; }
-.pp-btn-card { background:#2C2C2E; color:white; border:1px solid rgba(255,255,255,0.15); }
-.pp-btn-sepa { background:#F5F5F5; color:#333; }
-.pp-btn-card { background:#2C2C2E; color:white; border:1px solid rgba(255,255,255,0.15) !important; }
 .pp-paypal-btn:active { opacity:0.85; }
-.pay-text { color:#009CDE; font-size:22px; font-weight:900; }
-.pal-text { color:#012169; font-size:22px; font-weight:900; }
-.pp-confirm-btn { width:100%; padding:14px; background:transparent; border:1px solid rgba(255,255,255,0.2); border-radius:14px; color:#8E8E93; font-size:14px; cursor:pointer; }
-.pp-confirm-btn:active { background:rgba(255,255,255,0.05); }
 
 #splash { position:fixed; inset:0; background:#1C1C1E; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; transition:opacity 0.5s; }
 #splash.hidden { opacity:0; pointer-events:none; }
@@ -129,14 +138,12 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 </head>
 <body>
 
-<!-- SPLASH -->
 <div id="splash">
   <div class="logo-box"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
   <div class="app-name">YouVin</div>
   <div class="app-sub">Deine Musik, überall</div>
 </div>
 
-<!-- LOGIN -->
 <div class="screen active" id="login-screen" style="padding:28px;">
   <div>
     <div class="logo-box"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
@@ -152,7 +159,6 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
   </div>
 </div>
 
-<!-- MAIN APP -->
 <div id="app-screen">
   <div class="tab-content">
     <div class="trial-banner" id="trial-banner" onclick="showTab('sub')" style="display:none;">
@@ -164,7 +170,10 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
     <!-- HOME -->
     <div class="tab-pane active" id="tab-home">
       <div class="page-title">Startseite</div>
-      <div class="empty-state"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg><p>Gehe zu Mediathek</p></div>
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        <p>Gehe zu Mediathek</p>
+      </div>
     </div>
 
     <!-- RADIO -->
@@ -179,24 +188,24 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 
     <!-- MEDIATHEK -->
     <div class="tab-pane" id="tab-lib">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <div style="width:36px;height:36px;background:rgba(120,120,128,0.24);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+      <div class="lib-header">
+        <div>
+          <div class="lib-name" id="lib-username">Issa ❤️</div>
+          <div class="lib-count" id="lib-count">0 Songs</div>
         </div>
-        <div id="sub-badge-lib" class="sub-badge" style="background:#FF9F0A;" onclick="showTab('sub')">🆓 7T</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div id="sub-badge-lib" class="sub-badge" style="background:#FF9F0A;" onclick="showTab('sub')">🆓 7T</div>
+          <button class="lib-refresh" onclick="loadLibrary()" title="Aktualisieren">
+            <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          </button>
+        </div>
       </div>
-      <div class="grid-covers">
-        <div class="cover-box"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
-        <div class="cover-box"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
-        <div class="cover-box"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
-        <div class="cover-box"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
+      <div id="lib-loading" style="text-align:center;padding:40px;color:#8E8E93;display:none;">⏳ Laden...</div>
+      <div id="lib-empty" class="empty-state" style="display:none;">
+        <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        <p>Keine Musik — lade Songs herunter!</p>
       </div>
-      <div class="lib-title" id="lib-username">Issa ❤️</div>
-      <div class="play-row">
-        <button class="btn-circle"><svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></button>
-        <button class="btn-white"><svg width="20" height="20" viewBox="0 0 24 24" fill="black"><path d="M8 5v14l11-7z"/></svg> Wiedergeben</button>
-      </div>
-      <div class="empty-state" style="padding:20px;"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg><p>Keine Musik</p></div>
+      <div class="song-list" id="song-list"></div>
     </div>
 
     <!-- DOWNLOAD -->
@@ -224,9 +233,13 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
       <div class="page-title">Suche</div>
       <div class="search-box">
         <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-        <input type="text" placeholder="Titel, Künstler...">
+        <input type="text" id="search-input" placeholder="Titel, Künstler..." oninput="searchSongs()">
       </div>
-      <div class="empty-state"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><p>Suche nach Musik</p></div>
+      <div class="song-list" id="search-results"></div>
+      <div id="search-empty" class="empty-state">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <p>Suche nach Musik</p>
+      </div>
     </div>
 
     <!-- SUBSCRIPTION -->
@@ -237,7 +250,7 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
         <div style="font-size:28px;font-weight:800;margin:8px 0;">YouVin Premium</div>
         <div style="color:#8E8E93;">Höre Musik ohne Einschränkungen</div>
       </div>
-      <div id="trial-info-sub" style="background:rgba(48,209,88,0.15);border:1px solid rgba(48,209,88,0.3);border-radius:12px;padding:16px;display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+      <div style="background:rgba(48,209,88,0.15);border:1px solid rgba(48,209,88,0.3);border-radius:12px;padding:16px;display:flex;align-items:center;gap:10px;margin-bottom:20px;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="#30D158"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
         <span id="trial-sub-text" style="color:#30D158;font-size:15px;font-weight:600;">Noch 7 Tage kostenlos</span>
       </div>
@@ -253,11 +266,16 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
           <div style="text-align:right;"><div class="plan-price" style="color:#FF2D55;">€30</div><button class="plan-btn" style="background:#FF2D55;">Auswählen</button></div>
         </div>
       </div>
-            <div style="margin-top:12px;border-radius:16px;padding:20px;background:rgba(48,209,88,0.1);border:1px solid rgba(48,209,88,0.3);cursor:pointer;" onclick="openGooglePlay()"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:18px;font-weight:700;color:#30D158;">🎮 Google Play</div><div style="color:#8E8E93;font-size:13px;">Im Play Store herunterladen</div></div><svg width="32" height="32" viewBox="0 0 24 24" fill="#30D158"><path d="M3 20.5v-17c0-.83.94-1.3 1.6-.8l14 8.5c.6.36.6 1.24 0 1.6l-14 8.5c-.66.5-1.6.03-1.6-.8z"/></svg></div></div><p style="text-align:center;color:rgba(142,142,147,0.7);font-size:12px;margin-top:16px;">Sichere Zahlung über PayPal oder Google Play</p>
+      <div style="margin-top:12px;border-radius:16px;padding:20px;background:rgba(48,209,88,0.1);border:1px solid rgba(48,209,88,0.3);cursor:pointer;" onclick="openGooglePlay()">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div><div style="font-size:18px;font-weight:700;color:#30D158;">🎮 Google Play</div><div style="color:#8E8E93;font-size:13px;">Im Play Store herunterladen</div></div>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="#30D158"><path d="M3 20.5v-17c0-.83.94-1.3 1.6-.8l14 8.5c.6.36.6 1.24 0 1.6l-14 8.5c-.66.5-1.6.03-1.6-.8z"/></svg>
+        </div>
+      </div>
+      <p style="text-align:center;color:rgba(142,142,147,0.7);font-size:12px;margin-top:16px;">Sichere Zahlung über PayPal oder Google Play</p>
     </div>
   </div>
 
-  <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
     <div class="nav-item active" onclick="showTab('home')" id="nav-home"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Startseite</span></div>
     <div class="nav-item" onclick="showTab('radio')" id="nav-radio"><svg viewBox="0 0 24 24"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12c0 1.1.89 2 2 2h16c1.11 0 2-.9 2-2V8c0-1.11-.89-2-2-2H7.3l8.26-3.34L14.83 1 3.24 6.15zM12 18c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-4c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg><span>Radio</span></div>
@@ -265,6 +283,25 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
     <div class="nav-item" onclick="showTab('dl')" id="nav-dl"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg><span>Download</span></div>
     <div class="nav-item" onclick="showTab('search')" id="nav-search"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><span>Suche</span></div>
   </nav>
+</div>
+
+<!-- MINI PLAYER -->
+<div id="mini-player">
+  <div class="mp-top">
+    <div class="mp-icon"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
+    <div class="mp-info">
+      <div class="mp-title" id="mp-title">—</div>
+      <div class="mp-ext" id="mp-ext">—</div>
+    </div>
+    <div class="mp-controls">
+      <button class="mp-btn" onclick="prevSong()"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button class="mp-btn play-pause" id="mp-play-btn" onclick="togglePlay()"><svg viewBox="0 0 24 24" id="mp-play-icon"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="mp-btn" onclick="nextSong()"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+      <button class="mp-close" onclick="closePlayer()">✕</button>
+    </div>
+  </div>
+  <div class="mp-progress" onclick="seekAudio(event)"><div class="mp-progress-fill" id="mp-progress-fill"></div></div>
+  <div class="mp-time"><span id="mp-current">0:00</span><span id="mp-duration">0:00</span></div>
 </div>
 
 <!-- PAYPAL SCREEN -->
@@ -288,10 +325,11 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
       <div class="pp-feature" id="pp-feature-lifetime">✅ Lebenslanger Zugang</div>
     </div>
     <div id="paypal-button-container" style="min-height:50px;margin-bottom:12px;"></div>
-    <p style="text-align:center;color:#8E8E93;font-size:12px;margin-bottom:8px;">🔒 Deine Zahlung wird sicher über PayPal abgewickelt.<br>Du wirst nach der Zahlung sofort freigeschaltet.</p>
-    <p style="text-align:center;color:rgba(142,142,147,0.6);font-size:12px;margin-top:16px;">Sichere Zahlung über PayPal</p>
+    <p style="text-align:center;color:#8E8E93;font-size:12px;">🔒 Sichere Zahlung über PayPal</p>
   </div>
 </div>
+
+<audio id="audio-player" preload="none"></audio>
 
 <script>
 const SERVER = 'https://edition-misc-dealing-sms.trycloudflare.com';
@@ -303,6 +341,13 @@ let trialDays = 7;
 let selectedFormat = 'mp3-320';
 let currentPlan = 'lifetime';
 
+// Library state
+let allSongs = [];
+let currentSongIndex = -1;
+let isPlaying = false;
+
+const audio = document.getElementById('audio-player');
+
 const formats = [
   {id:'mp3-320', label:'MP3 · 320 kbps'},
   {id:'mp3-128', label:'MP3 · 128 kbps'},
@@ -311,9 +356,6 @@ const formats = [
   {id:'mp4-hd',  label:'MP4 · HD 1080p'},
   {id:'mp4-4k',  label:'MP4 · 4K'},
 ];
-
-const PAYPAL_YEARLY  = 'https://paypal.me/issa477/15';
-const PAYPAL_LIFETIME = 'https://paypal.me/issa477/30';
 
 window.onload = () => {
   renderFormats();
@@ -326,6 +368,13 @@ window.onload = () => {
     showApp();
   }
   setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1800);
+
+  // Audio events
+  audio.addEventListener('timeupdate', updateProgress);
+  audio.addEventListener('ended', nextSong);
+  audio.addEventListener('loadedmetadata', () => {
+    document.getElementById('mp-duration').textContent = formatTime(audio.duration);
+  });
 };
 
 function renderFormats() {
@@ -360,7 +409,7 @@ async function submitAuth() {
     localStorage.setItem('youvin_user', JSON.stringify(currentUser));
     showApp(); return;
   }
-  await new Promise(r => setTimeout(r, 800));
+  await new Promise(r => setTimeout(r, 600));
   currentUser = {email, subType:'free', trialDays:7};
   subType = 'free'; trialDays = 7;
   localStorage.setItem('youvin_user', JSON.stringify(currentUser));
@@ -371,6 +420,7 @@ function showApp() {
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
   updateUI();
+  loadLibrary();
 }
 
 function updateUI() {
@@ -386,7 +436,7 @@ function updateUI() {
   } else if (subType === 'yearly') {
     banner.style.display = 'none';
     badge.textContent = '📅 Yearly'; badge.style.background = '#0A84FF';
-  } else if (subType === 'lifetime' || subType === 'admin') {
+  } else {
     banner.style.display = 'none';
     badge.textContent = subType === 'admin' ? '👑 Admin' : '♾️ Lifetime';
     badge.style.background = '#FF2D55';
@@ -396,13 +446,222 @@ function updateUI() {
 function showTab(tab) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  const paneId = 'tab-' + tab;
-  if (document.getElementById(paneId)) document.getElementById(paneId).classList.add('active');
+  const pane = document.getElementById('tab-' + tab);
+  if (pane) pane.classList.add('active');
   const navMap = {home:'nav-home',radio:'nav-radio',lib:'nav-lib',dl:'nav-dl',search:'nav-search',sub:'nav-lib'};
   if (navMap[tab]) document.getElementById(navMap[tab]).classList.add('active');
+  if (tab === 'lib') loadLibrary();
   window.scrollTo(0,0);
 }
 
+// ===== LIBRARY =====
+async function loadLibrary() {
+  const loading = document.getElementById('lib-loading');
+  const empty = document.getElementById('lib-empty');
+  const list = document.getElementById('song-list');
+  loading.style.display = 'block';
+  empty.style.display = 'none';
+  list.innerHTML = '';
+  try {
+    const res = await fetch(`${SERVER}/library`);
+    const data = await res.json();
+    allSongs = data.songs || [];
+    loading.style.display = 'none';
+    document.getElementById('lib-count').textContent = allSongs.length + ' Songs';
+    if (allSongs.length === 0) {
+      empty.style.display = 'block';
+    } else {
+      renderSongList(allSongs, list);
+    }
+  } catch(e) {
+    loading.style.display = 'none';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#FF3B30;">❌ Server nicht erreichbar</div>';
+  }
+}
+
+function renderSongList(songs, container) {
+  container.innerHTML = songs.map((song, i) => {
+    const realIndex = allSongs.indexOf(song);
+    const isCurrentPlaying = realIndex === currentSongIndex && isPlaying;
+    const sizeMB = (song.size / 1024 / 1024).toFixed(1);
+    return `
+    <div class="song-item ${realIndex === currentSongIndex ? 'playing' : ''}" onclick="playSong(${realIndex})" id="song-item-${realIndex}">
+      <div class="song-icon ${realIndex === currentSongIndex ? 'playing-icon' : ''}">
+        ${realIndex === currentSongIndex && isPlaying
+          ? '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'
+          : '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'}
+      </div>
+      <div class="song-info">
+        <div class="song-title">${song.title}</div>
+        <div class="song-meta">${song.ext.toUpperCase()} · ${sizeMB} MB</div>
+      </div>
+      <div class="song-actions">
+        <button class="song-del" onclick="event.stopPropagation();deleteSong('${song.filename}',${realIndex})" title="Löschen">
+          <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function playSong(index) {
+  if (index < 0 || index >= allSongs.length) return;
+  currentSongIndex = index;
+  const song = allSongs[index];
+  const url = `${SERVER}/play/${encodeURIComponent(song.filename)}`;
+  audio.src = url;
+  audio.play().catch(e => console.error('Play error:', e));
+  isPlaying = true;
+  showMiniPlayer(song);
+  refreshSongList();
+}
+
+function showMiniPlayer(song) {
+  document.getElementById('mp-title').textContent = song.title;
+  document.getElementById('mp-ext').textContent = song.ext.toUpperCase();
+  document.getElementById('mini-player').classList.add('show');
+  updatePlayIcon();
+}
+
+function togglePlay() {
+  if (audio.paused) {
+    audio.play();
+    isPlaying = true;
+  } else {
+    audio.pause();
+    isPlaying = false;
+  }
+  updatePlayIcon();
+  refreshSongList();
+}
+
+function updatePlayIcon() {
+  const icon = document.getElementById('mp-play-icon');
+  if (audio.paused) {
+    icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+  } else {
+    icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+  }
+}
+
+function prevSong() {
+  if (currentSongIndex > 0) playSong(currentSongIndex - 1);
+}
+
+function nextSong() {
+  if (currentSongIndex < allSongs.length - 1) playSong(currentSongIndex + 1);
+  else { isPlaying = false; updatePlayIcon(); refreshSongList(); }
+}
+
+function closePlayer() {
+  audio.pause();
+  isPlaying = false;
+  currentSongIndex = -1;
+  document.getElementById('mini-player').classList.remove('show');
+  refreshSongList();
+}
+
+function updateProgress() {
+  if (!audio.duration) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+  document.getElementById('mp-progress-fill').style.width = pct + '%';
+  document.getElementById('mp-current').textContent = formatTime(audio.currentTime);
+}
+
+function seekAudio(e) {
+  if (!audio.duration) return;
+  const bar = e.currentTarget;
+  const rect = bar.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  audio.currentTime = pct * audio.duration;
+}
+
+function formatTime(s) {
+  if (!s || isNaN(s)) return '0:00';
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60).toString().padStart(2, '0');
+  return `${m}:${sec}`;
+}
+
+function refreshSongList() {
+  const list = document.getElementById('song-list');
+  if (allSongs.length > 0) renderSongList(allSongs, list);
+  const sResults = document.getElementById('search-results');
+  if (sResults.children.length > 0) searchSongs();
+}
+
+async function deleteSong(filename, index) {
+  if (!confirm('Möchtest du diesen Song löschen?')) return;
+  if (index === currentSongIndex) closePlayer();
+  try {
+    await fetch(`${SERVER}/delete/${encodeURIComponent(filename)}`, {method:'DELETE'});
+    allSongs.splice(index, 1);
+    if (currentSongIndex > index) currentSongIndex--;
+    document.getElementById('lib-count').textContent = allSongs.length + ' Songs';
+    const list = document.getElementById('song-list');
+    if (allSongs.length === 0) {
+      list.innerHTML = '';
+      document.getElementById('lib-empty').style.display = 'block';
+    } else {
+      renderSongList(allSongs, list);
+    }
+  } catch(e) {
+    alert('Fehler beim Löschen');
+  }
+}
+
+// ===== SEARCH =====
+function searchSongs() {
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  const results = document.getElementById('search-results');
+  const empty = document.getElementById('search-empty');
+  if (!q) { results.innerHTML = ''; empty.style.display = 'block'; return; }
+  const filtered = allSongs.filter(s => s.title.toLowerCase().includes(q));
+  empty.style.display = filtered.length === 0 ? 'block' : 'none';
+  renderSongList(filtered, results);
+}
+
+// ===== DOWNLOAD =====
+function clearDlStatus() { document.getElementById('dl-status').textContent = ''; }
+
+async function startDownload() {
+  const url = document.getElementById('dl-url').value.trim();
+  const statusEl = document.getElementById('dl-status');
+  const btn = document.getElementById('dl-btn');
+  if (!url) { statusEl.textContent = '⚠️ Bitte einen Link eingeben'; statusEl.className = 'status-msg status-orange'; return; }
+  if (!url.startsWith('http')) { statusEl.textContent = '⚠️ Ungültiger Link'; statusEl.className = 'status-msg status-orange'; return; }
+
+  let sendFormat = 'mp3', sendQuality = '320';
+  if (selectedFormat === 'mp3-320') { sendFormat = 'mp3'; sendQuality = '320'; }
+  else if (selectedFormat === 'mp3-128') { sendFormat = 'mp3'; sendQuality = '128'; }
+  else if (selectedFormat === 'm4a') { sendFormat = 'm4a'; sendQuality = '192'; }
+  else if (selectedFormat === 'flac') { sendFormat = 'flac'; sendQuality = '0'; }
+  else if (selectedFormat.startsWith('mp4')) { sendFormat = 'mp4'; sendQuality = 'best'; }
+
+  btn.textContent = '⏳ Wird heruntergeladen...'; btn.disabled = true;
+  statusEl.textContent = '⏳ Verbinde mit Server...'; statusEl.className = 'status-msg status-blue';
+
+  try {
+    const res = await fetch(`${SERVER}/download`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url, format: sendFormat, quality: sendQuality})
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      statusEl.textContent = '✅ Erfolgreich heruntergeladen!'; statusEl.className = 'status-msg status-green';
+      document.getElementById('dl-url').value = '';
+      await loadLibrary(); // تحديث المكتبة تلقائياً
+    } else {
+      statusEl.textContent = '❌ ' + (data.error || 'Fehler'); statusEl.className = 'status-msg status-red';
+    }
+  } catch(e) {
+    statusEl.textContent = '❌ Server nicht erreichbar'; statusEl.className = 'status-msg status-red';
+  }
+  btn.textContent = '⬇ Herunterladen'; btn.disabled = false;
+}
+
+// ===== PAYPAL =====
 function showPayPalScreen(plan) {
   currentPlan = plan;
   const isYearly = plan === 'yearly';
@@ -417,87 +676,33 @@ function showPayPalScreen(plan) {
   setTimeout(renderPayPalButtons, 200);
 }
 
-function closePayPalScreen() {
-  document.getElementById('paypal-screen').classList.remove('show');
-}
-
-function openPayPalLink() {
-  const url = currentPlan === 'yearly' ? PAYPAL_YEARLY : PAYPAL_LIFETIME;
-  window.open(url, '_blank');
-}
+function closePayPalScreen() { document.getElementById('paypal-screen').classList.remove('show'); }
 
 function renderPayPalButtons() {
   const container = document.getElementById('paypal-button-container');
   if (!container) return;
   container.innerHTML = '';
   if (typeof paypal === 'undefined') {
-    container.innerHTML = '<div style="color:#FF2D55;padding:16px;text-align:center;font-size:14px;">PayPal konnte nicht geladen werden. Bitte Internet prüfen.</div>';
+    container.innerHTML = '<div style="color:#FF2D55;padding:16px;text-align:center;">PayPal konnte nicht geladen werden.</div>';
     return;
   }
   const amount = currentPlan === 'yearly' ? '15.00' : '30.00';
-  const desc = currentPlan === 'yearly' ? 'YouVin Yearly' : 'YouVin Lifetime';
   paypal.Buttons({
-    style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal' },
-    createOrder: function(data, actions) {
-      return actions.order.create({
-        purchase_units: [{ amount: { value: amount, currency_code: 'EUR' }, description: desc }]
-      });
-    },
-    onApprove: function(data, actions) {
-      return actions.order.capture().then(function(details) {
-        subType = currentPlan;
-        if (currentUser) { currentUser.subType = subType; localStorage.setItem('youvin_user', JSON.stringify(currentUser)); }
-        closePayPalScreen();
-        updateUI();
-        showTab('home');
-        alert(currentPlan === 'yearly' ? '✅ Yearly aktiviert! Viel Spaß!' : '✅ Lifetime aktiviert! Viel Spaß!');
-      });
-    },
-    onError: function(err) {
-      alert('Zahlung fehlgeschlagen. Bitte erneut versuchen.');
-    }
+    style: { layout:'vertical', color:'gold', shape:'rect', label:'paypal' },
+    createOrder: (data, actions) => actions.order.create({
+      purchase_units: [{ amount: { value: amount, currency_code: 'EUR' }, description: 'YouVin ' + (currentPlan === 'yearly' ? 'Yearly' : 'Lifetime') }]
+    }),
+    onApprove: (data, actions) => actions.order.capture().then(() => {
+      subType = currentPlan;
+      if (currentUser) { currentUser.subType = subType; localStorage.setItem('youvin_user', JSON.stringify(currentUser)); }
+      closePayPalScreen(); updateUI(); showTab('home');
+      alert(currentPlan === 'yearly' ? '✅ Yearly aktiviert!' : '✅ Lifetime aktiviert!');
+    }),
+    onError: () => alert('Zahlung fehlgeschlagen. Bitte erneut versuchen.')
   }).render('#paypal-button-container');
 }
 
-function openGooglePlay() {
-  window.open("https://play.google.com/store/apps/details?id=com.youvin.app", "_blank");
-}
-
-function confirmPayment() {
-  if (confirm('Hast du die PayPal-Zahlung abgeschlossen?')) {
-    subType = currentPlan;
-    if (currentUser) { currentUser.subType = subType; localStorage.setItem('youvin_user', JSON.stringify(currentUser)); }
-    closePayPalScreen();
-    updateUI();
-    showTab('home');
-    alert(subType === 'yearly' ? '✅ Yearly aktiviert! Viel Spaß!' : '✅ Lifetime aktiviert! Viel Spaß!');
-  }
-}
-
-function clearDlStatus() { document.getElementById('dl-status').textContent = ''; }
-
-async function startDownload() {
-  const url = document.getElementById('dl-url').value.trim();
-  const statusEl = document.getElementById('dl-status');
-  const btn = document.getElementById('dl-btn');
-  if (!url) { statusEl.textContent = '⚠️ Bitte einen Link eingeben'; statusEl.className = 'status-msg status-orange'; return; }
-  if (!url.startsWith('http')) { statusEl.textContent = '⚠️ Ungültiger Link'; statusEl.className = 'status-msg status-orange'; return; }
-  btn.textContent = '⏳ Wird heruntergeladen...'; btn.disabled = true;
-  statusEl.textContent = '⏳ Verbinde mit Server...'; statusEl.className = 'status-msg status-blue';
-  try {
-    const res = await fetch(`${SERVER}/download`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url, format:selectedFormat})});
-    if (res.ok) {
-      statusEl.textContent = '✅ Erfolgreich heruntergeladen!'; statusEl.className = 'status-msg status-green';
-      document.getElementById('dl-url').value = '';
-    } else {
-      const err = await res.json();
-      statusEl.textContent = '❌ ' + (err.error || 'Fehler'); statusEl.className = 'status-msg status-red';
-    }
-  } catch(e) {
-    statusEl.textContent = '❌ Server nicht erreichbar'; statusEl.className = 'status-msg status-red';
-  }
-  btn.textContent = '⬇ Herunterladen'; btn.disabled = false;
-}
+function openGooglePlay() { window.open('https://play.google.com/store/apps/details?id=com.youvin.app', '_blank'); }
 </script>
 </body>
 </html>
