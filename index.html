@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="YouVin">
 <meta name="theme-color" content="#1C1C1E">
 <title>YouVin</title>
@@ -30,12 +30,12 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .toggle-link { color:#FF2D55; cursor:pointer; font-weight:600; }
 #app-screen { display:none; flex-direction:column; min-height:100vh; }
 #app-screen.active { display:flex; }
-.tab-content { flex:1; overflow-y:auto; padding:20px 20px 140px; }
+.tab-content { flex:1; overflow-y:auto; padding:20px 20px 160px; }
 .tab-pane { display:none; }
 .tab-pane.active { display:block; }
 .page-title { font-size:28px; font-weight:800; margin-bottom:20px; }
-.bottom-nav { position:fixed; bottom:0; left:0; right:0; background:rgba(28,28,30,0.95); border-top:1px solid rgba(255,255,255,0.1); padding:8px 0 20px; display:flex; }
-.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; }
+.bottom-nav { position:fixed; bottom:0; left:0; right:0; background:rgba(28,28,30,0.95); backdrop-filter:blur(20px); border-top:1px solid rgba(255,255,255,0.1); padding:8px 0 24px; display:flex; z-index:50; }
+.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; padding:4px 0; }
 .nav-item svg { width:24px; height:24px; fill:#8E8E93; }
 .nav-item span { font-size:10px; color:#8E8E93; }
 .nav-item.active svg { fill:#FF2D55; }
@@ -47,7 +47,7 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .format-item { padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.06); cursor:pointer; }
 .format-item:last-child { border-bottom:none; }
 .format-item.selected::after { content:'✓'; color:#FF2D55; font-weight:700; }
-.status-msg { font-size:13px; font-weight:500; margin:8px 0; }
+.status-msg { font-size:13px; font-weight:500; margin:8px 0; min-height:20px; }
 .status-green { color:#30D158; }
 .status-blue { color:#0A84FF; }
 .status-red { color:#FF2D55; }
@@ -66,57 +66,106 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .trial-banner { background:rgba(255,159,10,0.9); border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:8px; margin-bottom:16px; cursor:pointer; }
 .trial-banner span { flex:1; font-size:12px; font-weight:600; }
 .sub-badge { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; cursor:pointer; }
-.radio-center { text-align:center; padding:80px 20px; }
-.search-box { background:#2C2C2E; border-radius:12px; padding:0 12px; display:flex; align-items:center; gap:8px; margin-bottom:16px; }
-.search-box svg { width:20px; height:20px; fill:#8E8E93; flex-shrink:0; }
-.search-box input { background:none; border:none; outline:none; color:white; font-size:16px; flex:1; padding:12px 0; }
 
-/* MEDIATHEK */
-.lib-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-.lib-name { font-size:22px; font-weight:800; }
-.lib-count { font-size:13px; color:#8E8E93; }
-.lib-refresh { width:36px; height:36px; background:rgba(120,120,128,0.24); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
-.lib-refresh svg { width:20px; height:20px; fill:white; }
-.song-list { display:flex; flex-direction:column; gap:1px; }
-.song-item { background:#2C2C2E; border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:14px; margin-bottom:8px; cursor:pointer; transition:background 0.15s; }
+/* SONG ITEMS */
+.song-item { background:#2C2C2E; border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:14px; margin-bottom:8px; cursor:pointer; transition:background 0.15s; -webkit-user-select:none; }
 .song-item:active { background:#3A3A3C; }
-.song-item.playing { background:rgba(255,45,85,0.15); border:1px solid rgba(255,45,85,0.3); }
+.song-item.playing { background:rgba(255,45,85,0.12); border:1px solid rgba(255,45,85,0.3); }
 .song-icon { width:46px; height:46px; background:#FF2D55; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .song-icon svg { width:24px; height:24px; fill:white; }
-.song-icon.playing-icon { background:rgba(255,45,85,0.2); }
 .song-info { flex:1; min-width:0; }
 .song-title { font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
 .song-meta { font-size:11px; color:#8E8E93; }
-.song-actions { display:flex; align-items:center; gap:8px; }
-.song-del { width:30px; height:30px; background:rgba(255,59,48,0.1); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.song-dl-btn { width:30px; height:30px; background:rgba(10,132,255,0.1); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+.song-dl-btn svg { width:16px; height:16px; fill:#0A84FF; }
+.song-del { width:30px; height:30px; background:rgba(255,59,48,0.1); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
 .song-del svg { width:16px; height:16px; fill:#FF3B30; }
-.song-play-btn { width:30px; height:30px; background:rgba(255,255,255,0.1); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
-.song-play-btn svg { width:16px; height:16px; fill:white; }
 
 /* MINI PLAYER */
-#mini-player { display:none; position:fixed; bottom:72px; left:12px; right:12px; background:#2C2C2E; border-radius:16px; padding:12px 16px; border:1px solid rgba(255,255,255,0.1); z-index:100; box-shadow:0 8px 32px rgba(0,0,0,0.5); }
+#mini-player { display:none; position:fixed; bottom:72px; left:12px; right:12px; background:#2C2C2E; border-radius:16px; padding:12px 16px 10px; border:1px solid rgba(255,255,255,0.1); z-index:99; box-shadow:0 8px 32px rgba(0,0,0,0.6); cursor:pointer; }
 #mini-player.show { display:block; }
-.mp-top { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-.mp-icon { width:40px; height:40px; background:#FF2D55; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.mp-row { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+.mp-icon { width:40px; height:40px; background:#FF2D55; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; }
+.mp-icon img { width:100%; height:100%; object-fit:cover; }
 .mp-icon svg { width:22px; height:22px; fill:white; }
 .mp-info { flex:1; min-width:0; }
 .mp-title { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .mp-ext { font-size:11px; color:#8E8E93; }
-.mp-controls { display:flex; align-items:center; gap:8px; }
-.mp-btn { width:34px; height:34px; background:rgba(255,255,255,0.1); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
-.mp-btn svg { width:18px; height:18px; fill:white; }
-.mp-btn.play-pause { background:#FF2D55; width:40px; height:40px; }
-.mp-btn.play-pause svg { width:22px; height:22px; }
-.mp-close { background:none; border:none; color:#8E8E93; font-size:18px; cursor:pointer; padding:0 4px; }
-.mp-progress { width:100%; height:3px; background:rgba(255,255,255,0.1); border-radius:99px; cursor:pointer; }
-.mp-progress-fill { height:100%; background:#FF2D55; border-radius:99px; transition:width 0.3s; width:0%; }
-.mp-time { display:flex; justify-content:space-between; font-size:10px; color:#8E8E93; margin-top:4px; }
+.mp-btns { display:flex; align-items:center; gap:6px; }
+.mp-btn { width:32px; height:32px; background:rgba(255,255,255,0.1); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.mp-btn svg { width:16px; height:16px; fill:white; }
+.mp-play { background:#FF2D55; width:38px; height:38px; }
+.mp-play svg { width:20px; height:20px; }
+.mp-close-btn { background:none; border:none; color:#8E8E93; font-size:16px; cursor:pointer; padding:0 2px; }
+.mp-bar-wrap { width:100%; height:4px; background:rgba(255,255,255,0.15); border-radius:99px; cursor:pointer; position:relative; touch-action:none; }
+.mp-bar-fill { height:100%; background:#FF2D55; border-radius:99px; pointer-events:none; }
+.mp-times { display:flex; justify-content:space-between; font-size:10px; color:#8E8E93; margin-top:4px; }
+
+/* FULL PLAYER */
+#full-player { display:none; position:fixed; inset:0; z-index:200; overflow:hidden; }
+#full-player.show { display:flex; flex-direction:column; }
+.fp-bg { position:absolute; inset:0; background:linear-gradient(180deg,#2C1810 0%,#1C1C1E 100%); }
+.fp-bg-img { position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(40px) brightness(0.4); opacity:0; transition:opacity 0.5s; }
+.fp-bg-img.loaded { opacity:1; }
+.fp-content { position:relative; z-index:1; display:flex; flex-direction:column; height:100%; padding:0 24px 40px; }
+.fp-header { display:flex; align-items:center; justify-content:space-between; padding:56px 0 20px; }
+.fp-down { width:36px; height:36px; background:rgba(255,255,255,0.1); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.fp-down svg { width:20px; height:20px; fill:white; }
+.fp-title-small { font-size:14px; font-weight:700; color:rgba(255,255,255,0.7); }
+.fp-cover { width:100%; aspect-ratio:1; border-radius:20px; background:#2C2C2E; display:flex; align-items:center; justify-content:center; margin:16px 0 28px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+.fp-cover img { width:100%; height:100%; object-fit:cover; display:none; }
+.fp-cover img.loaded { display:block; }
+.fp-cover-placeholder { display:flex; align-items:center; justify-content:center; width:100%; height:100%; }
+.fp-cover-placeholder svg { width:80px; height:80px; fill:rgba(255,255,255,0.2); }
+.fp-song-info { margin-bottom:24px; }
+.fp-song-title { font-size:22px; font-weight:800; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fp-song-artist { font-size:15px; color:#8E8E93; }
+.fp-progress { margin-bottom:8px; }
+.fp-bar-wrap { width:100%; height:5px; background:rgba(255,255,255,0.2); border-radius:99px; cursor:pointer; touch-action:none; position:relative; }
+.fp-bar-fill { height:100%; background:#FF2D55; border-radius:99px; pointer-events:none; transition:width 0.1s linear; }
+.fp-times { display:flex; justify-content:space-between; font-size:12px; color:#8E8E93; margin-top:6px; }
+.fp-controls { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+.fp-btn { width:48px; height:48px; background:none; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.fp-btn svg { width:28px; height:28px; fill:white; }
+.fp-play-btn { width:72px; height:72px; background:#FF2D55; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 8px 24px rgba(255,45,85,0.4); }
+.fp-play-btn svg { width:36px; height:36px; fill:white; }
+
+/* HOME RECENT */
+.recent-section { margin-bottom:24px; }
+.recent-title { font-size:18px; font-weight:700; margin-bottom:14px; }
+.recent-grid { display:flex; gap:12px; overflow-x:auto; padding-bottom:8px; }
+.recent-grid::-webkit-scrollbar { display:none; }
+.recent-card { flex-shrink:0; width:130px; cursor:pointer; }
+.recent-card-img { width:130px; height:130px; background:#2C2C2E; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-bottom:8px; overflow:hidden; }
+.recent-card-img svg { width:48px; height:48px; fill:rgba(255,255,255,0.2); }
+.recent-card-title { font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.recent-card-meta { font-size:11px; color:#8E8E93; }
+
+/* RADIO */
+.radio-item { background:#2C2C2E; border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px; margin-bottom:10px; cursor:pointer; transition:background 0.15s; }
+.radio-item:active { background:#3A3A3C; }
+.radio-item.playing { background:rgba(255,45,85,0.12); border:1px solid rgba(255,45,85,0.3); }
+.radio-logo { width:52px; height:52px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+.radio-info { flex:1; }
+.radio-name { font-size:15px; font-weight:700; margin-bottom:3px; }
+.radio-genre { font-size:12px; color:#8E8E93; }
+.radio-live { font-size:10px; color:#30D158; font-weight:700; background:rgba(48,209,88,0.15); padding:2px 8px; border-radius:99px; }
+
+/* SEARCH */
+.search-box { background:#2C2C2E; border-radius:14px; padding:0 16px; display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+.search-box svg { width:20px; height:20px; fill:#8E8E93; flex-shrink:0; }
+.search-box input { background:none; border:none; outline:none; color:white; font-size:16px; flex:1; padding:14px 0; }
+
+/* LIB HEADER */
+.lib-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.lib-refresh { width:36px; height:36px; background:rgba(120,120,128,0.24); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.lib-refresh svg { width:20px; height:20px; fill:white; }
 
 /* PAYPAL */
-#paypal-screen { display:none; position:fixed; inset:0; background:#1C1C1E; z-index:1000; overflow-y:auto; }
+#paypal-screen { display:none; position:fixed; inset:0; background:#1C1C1E; z-index:300; overflow-y:auto; }
 #paypal-screen.show { display:block; }
 .pp-header { padding:16px 20px; display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(255,255,255,0.1); }
-.pp-close { width:32px; height:32px; background:#2C2C2E; border-radius:50%; border:none; color:white; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.pp-close { width:32px; height:32px; background:#2C2C2E; border-radius:50%; border:none; color:white; font-size:18px; cursor:pointer; }
 .pp-body { padding:24px; }
 .pp-card { background:#2C2C2E; border-radius:24px; padding:32px 24px; text-align:center; margin-bottom:24px; }
 .pp-logo { width:80px; height:80px; background:#FF2D55; border-radius:20px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; }
@@ -126,10 +175,7 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .pp-price { font-size:52px; font-weight:900; margin-bottom:4px; }
 .pp-period { color:#8E8E93; font-size:14px; }
 .pp-features { background:#2C2C2E; border-radius:16px; padding:16px; margin-bottom:24px; }
-.pp-feature { padding:8px 0; font-size:14px; text-align:left; }
-.pp-paypal-btn { width:100%; padding:18px; border:none; border-radius:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:10px; font-size:17px; font-weight:700; }
-.pp-btn-paypal { background:#F5C844; color:#003087; }
-.pp-paypal-btn:active { opacity:0.85; }
+.pp-feature { padding:8px 0; font-size:14px; }
 
 #splash { position:fixed; inset:0; background:#1C1C1E; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; transition:opacity 0.5s; }
 #splash.hidden { opacity:0; pointer-events:none; }
@@ -170,32 +216,42 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
     <!-- HOME -->
     <div class="tab-pane active" id="tab-home">
       <div class="page-title">Startseite</div>
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-        <p>Gehe zu Mediathek</p>
+      <div class="recent-section">
+        <div class="recent-title">🎵 Zuletzt hinzugefügt</div>
+        <div class="recent-grid" id="recent-grid">
+          <div style="color:#8E8E93;font-size:14px;padding:20px;">Keine Songs vorhanden</div>
+        </div>
+      </div>
+      <div class="recent-section">
+        <div class="recent-title">📻 Radio hören</div>
+        <div style="background:#2C2C2E;border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="showTab('radio')">
+          <div style="width:46px;height:46px;background:rgba(255,45,85,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#FF2D55"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12c0 1.1.89 2 2 2h16c1.11 0 2-.9 2-2V8c0-1.11-.89-2-2-2H7.3l8.26-3.34L14.83 1 3.24 6.15z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:15px;font-weight:700;">Radio öffnen</div>
+            <div style="font-size:12px;color:#8E8E93;">Pop, Rock, Türk, Kürtçe und mehr</div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- RADIO -->
     <div class="tab-pane" id="tab-radio">
       <div class="page-title">Radio</div>
-      <div class="radio-center">
-        <svg width="80" height="80" viewBox="0 0 24 24" fill="rgba(255,255,255,0.15)"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12c0 1.1.89 2 2 2h16c1.11 0 2-.9 2-2V8c0-1.11-.89-2-2-2H7.3l8.26-3.34L14.83 1 3.24 6.15zM12 18c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-4c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg>
-        <p style="color:rgba(255,255,255,0.4);font-size:22px;font-weight:700;margin:16px 0 8px;">Radio</p>
-        <p style="color:rgba(255,255,255,0.4);">Bald verfügbar</p>
-      </div>
+      <div id="radio-list"></div>
     </div>
 
     <!-- MEDIATHEK -->
     <div class="tab-pane" id="tab-lib">
       <div class="lib-header">
         <div>
-          <div class="lib-name" id="lib-username">Issa ❤️</div>
-          <div class="lib-count" id="lib-count">0 Songs</div>
+          <div style="font-size:22px;font-weight:800;" id="lib-username">Issa ❤️</div>
+          <div style="font-size:13px;color:#8E8E93;" id="lib-count">0 Songs</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <div id="sub-badge-lib" class="sub-badge" style="background:#FF9F0A;" onclick="showTab('sub')">🆓 7T</div>
-          <button class="lib-refresh" onclick="loadLibrary()" title="Aktualisieren">
+          <button class="lib-refresh" onclick="loadLibrary()">
             <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
           </button>
         </div>
@@ -203,9 +259,9 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
       <div id="lib-loading" style="text-align:center;padding:40px;color:#8E8E93;display:none;">⏳ Laden...</div>
       <div id="lib-empty" class="empty-state" style="display:none;">
         <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-        <p>Keine Musik — lade Songs herunter!</p>
+        <p>Keine Songs — lade Musik herunter!</p>
       </div>
-      <div class="song-list" id="song-list"></div>
+      <div id="song-list"></div>
     </div>
 
     <!-- DOWNLOAD -->
@@ -233,16 +289,13 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
       <div class="page-title">Suche</div>
       <div class="search-box">
         <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-        <input type="text" id="search-input" placeholder="Titel, Künstler..." oninput="searchSongs()">
+        <input type="text" id="search-input" placeholder="Titel suchen..." oninput="searchSongs()">
       </div>
-      <div class="song-list" id="search-results"></div>
-      <div id="search-empty" class="empty-state">
-        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-        <p>Suche nach Musik</p>
-      </div>
+      <div id="search-results"></div>
+      <div id="search-hint" style="text-align:center;padding:40px;color:#8E8E93;">Tippe um zu suchen</div>
     </div>
 
-    <!-- SUBSCRIPTION -->
+    <!-- SUB -->
     <div class="tab-pane" id="tab-sub">
       <div class="page-title">Premium</div>
       <div style="text-align:center;margin-bottom:24px;">
@@ -266,13 +319,6 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
           <div style="text-align:right;"><div class="plan-price" style="color:#FF2D55;">€30</div><button class="plan-btn" style="background:#FF2D55;">Auswählen</button></div>
         </div>
       </div>
-      <div style="margin-top:12px;border-radius:16px;padding:20px;background:rgba(48,209,88,0.1);border:1px solid rgba(48,209,88,0.3);cursor:pointer;" onclick="openGooglePlay()">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div><div style="font-size:18px;font-weight:700;color:#30D158;">🎮 Google Play</div><div style="color:#8E8E93;font-size:13px;">Im Play Store herunterladen</div></div>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="#30D158"><path d="M3 20.5v-17c0-.83.94-1.3 1.6-.8l14 8.5c.6.36.6 1.24 0 1.6l-14 8.5c-.66.5-1.6.03-1.6-.8z"/></svg>
-        </div>
-      </div>
-      <p style="text-align:center;color:rgba(142,142,147,0.7);font-size:12px;margin-top:16px;">Sichere Zahlung über PayPal oder Google Play</p>
     </div>
   </div>
 
@@ -286,25 +332,65 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 </div>
 
 <!-- MINI PLAYER -->
-<div id="mini-player">
-  <div class="mp-top">
-    <div class="mp-icon"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
+<div id="mini-player" onclick="openFullPlayer()">
+  <div class="mp-row">
+    <div class="mp-icon" id="mp-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+    </div>
     <div class="mp-info">
       <div class="mp-title" id="mp-title">—</div>
       <div class="mp-ext" id="mp-ext">—</div>
     </div>
-    <div class="mp-controls">
+    <div class="mp-btns" onclick="event.stopPropagation()">
       <button class="mp-btn" onclick="prevSong()"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
-      <button class="mp-btn play-pause" id="mp-play-btn" onclick="togglePlay()"><svg viewBox="0 0 24 24" id="mp-play-icon"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="mp-btn mp-play" id="mp-play-btn" onclick="togglePlay()"><svg viewBox="0 0 24 24" id="mp-play-icon"><path d="M8 5v14l11-7z"/></svg></button>
       <button class="mp-btn" onclick="nextSong()"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
-      <button class="mp-close" onclick="closePlayer()">✕</button>
+      <button class="mp-close-btn" onclick="event.stopPropagation();closePlayer()">✕</button>
     </div>
   </div>
-  <div class="mp-progress" onclick="seekAudio(event)"><div class="mp-progress-fill" id="mp-progress-fill"></div></div>
-  <div class="mp-time"><span id="mp-current">0:00</span><span id="mp-duration">0:00</span></div>
+  <div class="mp-bar-wrap" id="mp-bar-wrap">
+    <div class="mp-bar-fill" id="mp-bar-fill" style="width:0%"></div>
+  </div>
+  <div class="mp-times"><span id="mp-cur">0:00</span><span id="mp-dur">0:00</span></div>
 </div>
 
-<!-- PAYPAL SCREEN -->
+<!-- FULL PLAYER -->
+<div id="full-player">
+  <div class="fp-bg"></div>
+  <div class="fp-bg-img" id="fp-bg-img"></div>
+  <div class="fp-content">
+    <div class="fp-header">
+      <button class="fp-down" onclick="closeFullPlayer()">
+        <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+      </button>
+      <span class="fp-title-small">Wird abgespielt</span>
+      <div style="width:36px;"></div>
+    </div>
+    <div class="fp-cover" id="fp-cover">
+      <div class="fp-cover-placeholder" id="fp-placeholder">
+        <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+      </div>
+      <img id="fp-cover-img" alt="">
+    </div>
+    <div class="fp-song-info">
+      <div class="fp-song-title" id="fp-song-title">—</div>
+      <div class="fp-song-artist" id="fp-song-artist">YouVin</div>
+    </div>
+    <div class="fp-progress">
+      <div class="fp-bar-wrap" id="fp-bar-wrap">
+        <div class="fp-bar-fill" id="fp-bar-fill" style="width:0%"></div>
+      </div>
+      <div class="fp-times"><span id="fp-cur">0:00</span><span id="fp-dur">0:00</span></div>
+    </div>
+    <div class="fp-controls">
+      <button class="fp-btn" onclick="prevSong()"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button class="fp-play-btn" id="fp-play-btn" onclick="togglePlay()"><svg viewBox="0 0 24 24" id="fp-play-icon"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="fp-btn" onclick="nextSong()"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYPAL -->
 <div id="paypal-screen">
   <div class="pp-header">
     <button class="pp-close" onclick="closePayPalScreen()">✕</button>
@@ -314,13 +400,13 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
     <div class="pp-card">
       <div class="pp-logo"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
       <div class="pp-title" id="pp-title">YouVin Lifetime</div>
-      <div class="pp-desc" id="pp-desc">Einmalige Zahlung · Für immer</div>
+      <div class="pp-desc" id="pp-desc">Einmalige Zahlung</div>
       <div class="pp-price" id="pp-price" style="color:#FF2D55;">€30</div>
       <div class="pp-period" id="pp-period">einmalig</div>
     </div>
     <div class="pp-features">
       <div class="pp-feature">✅ Unbegrenzte Downloads</div>
-      <div class="pp-feature">✅ Alle Formate: MP3, FLAC, M4A, MP4</div>
+      <div class="pp-feature">✅ MP3, FLAC, M4A, MP4</div>
       <div class="pp-feature">✅ Keine Werbung</div>
       <div class="pp-feature" id="pp-feature-lifetime">✅ Lebenslanger Zugang</div>
     </div>
@@ -329,380 +415,444 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
   </div>
 </div>
 
-<audio id="audio-player" preload="none"></audio>
+<audio id="audio-el" preload="none"></audio>
 
 <script>
 const SERVER = 'https://forget-sept-closes-orbit.trycloudflare.com';
 
-let isRegister = false;
-let currentUser = null;
-let subType = 'free';
-let trialDays = 7;
-let selectedFormat = 'mp3-320';
-let currentPlan = 'lifetime';
+const RADIOS = [
+  {name:'YouVin Pop', genre:'Pop · Deutsch', emoji:'🎵', url:'https://streams.br.de/br-pop_2.m3u8'},
+  {name:'Rock Antenne', genre:'Rock · Classic', emoji:'🎸', url:'https://stream.rockantenne.de/rockantenne/stream/icecast'},
+  {name:'Türkiye Radyo', genre:'Türk Müziği', emoji:'🇹🇷', url:'https://радиотурция.com/stream'},
+  {name:'NRJ Germany', genre:'Pop · Hits', emoji:'🔥', url:'https://streams.nrj.fr/nrj-allemagne-128'},
+  {name:'Antenne Bayern', genre:'Bayern · Pop', emoji:'🍺', url:'https://stream.antenne.de/antenne'},
+  {name:'1LIVE', genre:'Jugend · Pop', emoji:'🎤', url:'https://wdr-1live-live.icecastssl.wdr.de/wdr/1live/live/mp3/128/stream.mp3'},
+];
 
-// Library state
-let allSongs = [];
-let currentSongIndex = -1;
-let isPlaying = false;
+let isRegister=false, currentUser=null, subType='free', trialDays=7;
+let selectedFormat='mp3-320';
+let currentPlan='lifetime';
+let allSongs=[], currentIdx=-1, isPlaying=false, isRadio=false;
+let radioUrl='';
 
-const audio = document.getElementById('audio-player');
+const audio = document.getElementById('audio-el');
 
 const formats = [
-  {id:'mp3-320', label:'MP3 · 320 kbps'},
-  {id:'mp3-128', label:'MP3 · 128 kbps'},
-  {id:'m4a',     label:'M4A / AAC'},
-  {id:'flac',    label:'FLAC Lossless'},
-  {id:'mp4-hd',  label:'MP4 · HD 1080p'},
-  {id:'mp4-4k',  label:'MP4 · 4K'},
+  {id:'mp3-320',label:'MP3 · 320 kbps'},
+  {id:'mp3-128',label:'MP3 · 128 kbps'},
+  {id:'m4a',label:'M4A / AAC'},
+  {id:'flac',label:'FLAC Lossless'},
+  {id:'mp4-hd',label:'MP4 · HD 1080p'},
+  {id:'mp4-4k',label:'MP4 · 4K'},
 ];
 
 window.onload = () => {
   renderFormats();
+  renderRadio();
   const saved = localStorage.getItem('youvin_user');
   if (saved) {
     const u = JSON.parse(saved);
-    currentUser = u;
-    subType = u.subType || 'free';
-    trialDays = u.trialDays || 7;
+    currentUser=u; subType=u.subType||'free'; trialDays=u.trialDays||7;
     showApp();
   }
-  setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1800);
+  setTimeout(()=>document.getElementById('splash').classList.add('hidden'),1800);
 
-  // Audio events
-  audio.addEventListener('timeupdate', updateProgress);
-  audio.addEventListener('ended', nextSong);
-  audio.addEventListener('loadedmetadata', () => {
-    document.getElementById('mp-duration').textContent = formatTime(audio.duration);
-  });
+  audio.addEventListener('timeupdate', onTimeUpdate);
+  audio.addEventListener('ended', onEnded);
+  audio.addEventListener('loadedmetadata', onMetadata);
+  audio.addEventListener('play', ()=>{ isPlaying=true; updatePlayIcons(); refreshList(); });
+  audio.addEventListener('pause', ()=>{ isPlaying=false; updatePlayIcons(); refreshList(); });
+
+  setupProgressBar('mp-bar-wrap', true);
+  setupProgressBar('fp-bar-wrap', false);
 };
 
 function renderFormats() {
-  const list = document.getElementById('format-list');
-  list.innerHTML = formats.map(f => `
-    <div class="format-item ${f.id === selectedFormat ? 'selected' : ''}" onclick="selectFormat('${f.id}')">
-      <span>${f.label}</span>
+  document.getElementById('format-list').innerHTML = formats.map(f=>
+    `<div class="format-item ${f.id===selectedFormat?'selected':''}" onclick="selectFormat('${f.id}')"><span>${f.label}</span></div>`
+  ).join('');
+}
+function selectFormat(id){ selectedFormat=id; renderFormats(); }
+
+function renderRadio() {
+  document.getElementById('radio-list').innerHTML = RADIOS.map((r,i)=>`
+    <div class="radio-item" id="radio-${i}" onclick="playRadio(${i})">
+      <div class="radio-logo" style="background:rgba(255,45,85,0.15);">${r.emoji}</div>
+      <div class="radio-info">
+        <div class="radio-name">${r.name}</div>
+        <div class="radio-genre">${r.genre}</div>
+      </div>
+      <span class="radio-live">LIVE</span>
     </div>`).join('');
 }
 
-function selectFormat(id) { selectedFormat = id; renderFormats(); }
+function playRadio(i) {
+  const r = RADIOS[i];
+  isRadio=true; currentIdx=-1;
+  audio.src=r.url; audio.play();
+  document.querySelectorAll('.radio-item').forEach(el=>el.classList.remove('playing'));
+  document.getElementById('radio-'+i).classList.add('playing');
+  document.getElementById('mp-title').textContent=r.name;
+  document.getElementById('mp-ext').textContent='LIVE Radio';
+  document.getElementById('mini-player').classList.add('show');
+  document.getElementById('fp-song-title').textContent=r.name;
+  document.getElementById('fp-song-artist').textContent=r.genre;
+}
 
 function toggleAuth() {
-  isRegister = !isRegister;
-  document.getElementById('auth-title').textContent = isRegister ? 'Registrieren' : 'Anmelden';
-  document.getElementById('auth-btn').textContent = isRegister ? 'Konto erstellen' : 'Anmelden';
-  document.getElementById('toggle-text').textContent = isRegister ? 'Bereits registriert? ' : 'Noch kein Konto? ';
-  document.getElementById('toggle-link').textContent = isRegister ? 'Anmelden' : 'Registrieren';
-  document.getElementById('auth-error').textContent = '';
+  isRegister=!isRegister;
+  document.getElementById('auth-title').textContent=isRegister?'Registrieren':'Anmelden';
+  document.getElementById('auth-btn').textContent=isRegister?'Konto erstellen':'Anmelden';
+  document.getElementById('toggle-text').textContent=isRegister?'Bereits registriert? ':'Noch kein Konto? ';
+  document.getElementById('toggle-link').textContent=isRegister?'Anmelden':'Registrieren';
+  document.getElementById('auth-error').textContent='';
 }
 
 async function submitAuth() {
-  const email = document.getElementById('email').value.trim();
-  const pass = document.getElementById('password').value.trim();
-  const errEl = document.getElementById('auth-error');
-  if (!email || !pass) { errEl.textContent = 'Bitte E-Mail und Passwort eingeben'; return; }
-  if (pass.length < 6) { errEl.textContent = 'Passwort muss mindestens 6 Zeichen haben'; return; }
-  document.getElementById('auth-btn').textContent = '...';
-  if (email === 'admin@youvin.app' && pass === 'YouVin2024!') {
-    currentUser = {email, subType:'admin'};
-    subType = 'admin';
-    localStorage.setItem('youvin_user', JSON.stringify(currentUser));
+  const email=document.getElementById('email').value.trim();
+  const pass=document.getElementById('password').value.trim();
+  const err=document.getElementById('auth-error');
+  if(!email||!pass){err.textContent='Bitte E-Mail und Passwort eingeben';return;}
+  if(pass.length<6){err.textContent='Passwort muss mindestens 6 Zeichen haben';return;}
+  document.getElementById('auth-btn').textContent='...';
+  if(email==='admin@youvin.app'&&pass==='YouVin2024!'){
+    currentUser={email,subType:'admin'}; subType='admin';
+    localStorage.setItem('youvin_user',JSON.stringify(currentUser));
     showApp(); return;
   }
-  await new Promise(r => setTimeout(r, 600));
-  currentUser = {email, subType:'free', trialDays:7};
-  subType = 'free'; trialDays = 7;
-  localStorage.setItem('youvin_user', JSON.stringify(currentUser));
+  await new Promise(r=>setTimeout(r,600));
+  currentUser={email,subType:'free',trialDays:7}; subType='free'; trialDays=7;
+  localStorage.setItem('youvin_user',JSON.stringify(currentUser));
   showApp();
 }
 
 function showApp() {
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
-  updateUI();
-  loadLibrary();
+  updateUI(); loadLibrary();
 }
 
 function updateUI() {
-  const banner = document.getElementById('trial-banner');
-  const badge = document.getElementById('sub-badge-lib');
-  const name = (currentUser?.email || 'Issa').split('@')[0];
-  document.getElementById('lib-username').textContent = name + ' ❤️';
-  if (subType === 'free') {
-    banner.style.display = 'flex';
-    document.getElementById('trial-text').textContent = `Noch ${trialDays} Tage kostenlos • Jetzt upgraden`;
-    document.getElementById('trial-sub-text').textContent = `Noch ${trialDays} Tage kostenlos`;
-    badge.textContent = `🆓 ${trialDays}T`; badge.style.background = '#FF9F0A';
-  } else if (subType === 'yearly') {
-    banner.style.display = 'none';
-    badge.textContent = '📅 Yearly'; badge.style.background = '#0A84FF';
+  const banner=document.getElementById('trial-banner');
+  const badge=document.getElementById('sub-badge-lib');
+  const name=(currentUser?.email||'Issa').split('@')[0];
+  document.getElementById('lib-username').textContent=name+' ❤️';
+  if(subType==='free'){
+    banner.style.display='flex';
+    document.getElementById('trial-text').textContent=`Noch ${trialDays} Tage kostenlos • Jetzt upgraden`;
+    document.getElementById('trial-sub-text').textContent=`Noch ${trialDays} Tage kostenlos`;
+    badge.textContent=`🆓 ${trialDays}T`; badge.style.background='#FF9F0A';
+  } else if(subType==='yearly'){
+    banner.style.display='none'; badge.textContent='📅 Yearly'; badge.style.background='#0A84FF';
   } else {
-    banner.style.display = 'none';
-    badge.textContent = subType === 'admin' ? '👑 Admin' : '♾️ Lifetime';
-    badge.style.background = '#FF2D55';
+    banner.style.display='none';
+    badge.textContent=subType==='admin'?'👑 Admin':'♾️ Lifetime';
+    badge.style.background='#FF2D55';
   }
 }
 
 function showTab(tab) {
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  const pane = document.getElementById('tab-' + tab);
-  if (pane) pane.classList.add('active');
-  const navMap = {home:'nav-home',radio:'nav-radio',lib:'nav-lib',dl:'nav-dl',search:'nav-search',sub:'nav-lib'};
-  if (navMap[tab]) document.getElementById(navMap[tab]).classList.add('active');
-  if (tab === 'lib') loadLibrary();
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pane=document.getElementById('tab-'+tab);
+  if(pane) pane.classList.add('active');
+  const navMap={home:'nav-home',radio:'nav-radio',lib:'nav-lib',dl:'nav-dl',search:'nav-search',sub:'nav-lib'};
+  if(navMap[tab]) document.getElementById(navMap[tab]).classList.add('active');
+  if(tab==='lib') loadLibrary();
   window.scrollTo(0,0);
 }
 
-// ===== LIBRARY =====
 async function loadLibrary() {
-  const loading = document.getElementById('lib-loading');
-  const empty = document.getElementById('lib-empty');
-  const list = document.getElementById('song-list');
-  loading.style.display = 'block';
-  empty.style.display = 'none';
-  list.innerHTML = '';
+  const loading=document.getElementById('lib-loading');
+  const empty=document.getElementById('lib-empty');
+  const list=document.getElementById('song-list');
+
+  // أولاً: عرض القائمة المحفوظة فوراً
+  const cached = localStorage.getItem('youvin_songs');
+  if (cached) {
+    allSongs = JSON.parse(cached);
+    loading.style.display='none';
+    document.getElementById('lib-count').textContent=allSongs.length+' Songs (offline)';
+    if(allSongs.length===0){ empty.style.display='block'; }
+    else { empty.style.display='none'; renderSongs(allSongs,list); }
+    renderHome();
+  } else {
+    loading.style.display='block';
+  }
+
+  // ثانياً: تحديث من السيرفر في الخلفية
   try {
-    const res = await fetch(`${SERVER}/library`);
-    const data = await res.json();
-    allSongs = data.songs || [];
-    loading.style.display = 'none';
-    document.getElementById('lib-count').textContent = allSongs.length + ' Songs';
-    if (allSongs.length === 0) {
-      empty.style.display = 'block';
-    } else {
-      renderSongList(allSongs, list);
-    }
+    const res=await fetch(`${SERVER}/library`,{signal:AbortSignal.timeout(5000)});
+    const data=await res.json();
+    allSongs=data.songs||[];
+    localStorage.setItem('youvin_songs', JSON.stringify(allSongs));
+    loading.style.display='none';
+    document.getElementById('lib-count').textContent=allSongs.length+' Songs';
+    if(allSongs.length===0){ empty.style.display='block'; list.innerHTML=''; }
+    else { empty.style.display='none'; renderSongs(allSongs,list); }
+    renderHome();
   } catch(e) {
-    loading.style.display = 'none';
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:#FF3B30;">❌ Server nicht erreichbar</div>';
+    loading.style.display='none';
+    if(!cached) {
+      list.innerHTML='<div style="text-align:center;padding:40px;color:#FF9F0A;">⚠️ Server offline — Cached Daten werden angezeigt</div>';
+    } else {
+      // عرض رسالة صغيرة أن السيرفر غير متصل
+      document.getElementById('lib-count').textContent=allSongs.length+' Songs (offline)';
+    }
   }
 }
 
-function renderSongList(songs, container) {
-  container.innerHTML = songs.map((song, i) => {
-    const realIndex = allSongs.indexOf(song);
-    const isCurrentPlaying = realIndex === currentSongIndex && isPlaying;
-    const sizeMB = (song.size / 1024 / 1024).toFixed(1);
-    return `
-    <div class="song-item ${realIndex === currentSongIndex ? 'playing' : ''}" onclick="playSong(${realIndex})" id="song-item-${realIndex}">
-      <div class="song-icon ${realIndex === currentSongIndex ? 'playing-icon' : ''}">
-        ${realIndex === currentSongIndex && isPlaying
-          ? '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'
-          : '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'}
-      </div>
-      <div class="song-info">
-        <div class="song-title">${song.title}</div>
-        <div class="song-meta">${song.ext.toUpperCase()} · ${sizeMB} MB</div>
-      </div>
-      <div class="song-actions">
-        <button class="song-del" onclick="event.stopPropagation();deleteSong('${song.filename}',${realIndex})" title="Löschen">
-          <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-        </button>
-      </div>
+function renderHome() {
+  const grid=document.getElementById('recent-grid');
+  if(allSongs.length===0){
+    grid.innerHTML='<div style="color:#8E8E93;font-size:14px;padding:20px;">Keine Songs vorhanden</div>';
+    return;
+  }
+  const recent=allSongs.slice(-8).reverse();
+  grid.innerHTML=recent.map((s,i)=>{
+    const idx=allSongs.indexOf(s);
+    return `<div class="recent-card" onclick="playSong(${idx})">
+      <div class="recent-card-img"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div>
+      <div class="recent-card-title">${s.title}</div>
+      <div class="recent-card-meta">${s.ext.toUpperCase()}</div>
     </div>`;
   }).join('');
 }
 
-function playSong(index) {
-  if (index < 0 || index >= allSongs.length) return;
-  currentSongIndex = index;
-  const song = allSongs[index];
-  const url = `${SERVER}/play/${encodeURIComponent(song.filename)}`;
-  audio.src = url;
-  audio.play().catch(e => console.error('Play error:', e));
-  isPlaying = true;
-  showMiniPlayer(song);
-  refreshSongList();
+function renderSongs(songs, container) {
+  container.innerHTML=songs.map(song=>{
+    const idx=allSongs.indexOf(song);
+    const active=idx===currentIdx;
+    const mb=( song.size/1024/1024).toFixed(1);
+    return `<div class="song-item ${active?'playing':''}" id="si-${idx}" onclick="playSong(${idx})">
+      <div class="song-icon" style="${active?'background:rgba(255,45,85,0.2);':''}">
+        ${active&&isPlaying
+          ?'<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'
+          :'<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'}
+      </div>
+      <div class="song-info">
+        <div class="song-title">${song.title}</div>
+        <div class="song-meta">${song.ext.toUpperCase()} · ${mb} MB</div>
+      </div>
+      <button class="song-dl-btn" onclick="event.stopPropagation();downloadToPhone('${song.filename}')" title="Auf Gerät laden">
+        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+      </button>
+      <button class="song-del" onclick="event.stopPropagation();deleteSong('${song.filename}',${idx})">
+        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+      </button>
+    </div>`;
+  }).join('');
 }
 
-function showMiniPlayer(song) {
-  document.getElementById('mp-title').textContent = song.title;
-  document.getElementById('mp-ext').textContent = song.ext.toUpperCase();
+function refreshList() {
+  const list=document.getElementById('song-list');
+  if(allSongs.length>0) renderSongs(allSongs,list);
+  const sr=document.getElementById('search-results');
+  if(sr.children.length>0) searchSongs();
+}
+
+function playSong(idx) {
+  if(idx<0||idx>=allSongs.length) return;
+  isRadio=false; currentIdx=idx;
+  const song=allSongs[idx];
+  audio.src=`${SERVER}/play/${encodeURIComponent(song.filename)}`;
+  audio.play();
+  const title=song.title;
+  document.getElementById('mp-title').textContent=title;
+  document.getElementById('mp-ext').textContent=song.ext.toUpperCase();
+  document.getElementById('fp-song-title').textContent=title;
+  document.getElementById('fp-song-artist').textContent='YouVin';
   document.getElementById('mini-player').classList.add('show');
-  updatePlayIcon();
+  refreshList();
 }
 
 function togglePlay() {
-  if (audio.paused) {
-    audio.play();
-    isPlaying = true;
-  } else {
-    audio.pause();
-    isPlaying = false;
-  }
-  updatePlayIcon();
-  refreshSongList();
-}
-
-function updatePlayIcon() {
-  const icon = document.getElementById('mp-play-icon');
-  if (audio.paused) {
-    icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-  } else {
-    icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-  }
+  if(audio.paused) audio.play(); else audio.pause();
 }
 
 function prevSong() {
-  if (currentSongIndex > 0) playSong(currentSongIndex - 1);
+  if(isRadio) return;
+  if(currentIdx>0) playSong(currentIdx-1);
+}
+
+function onEnded() {
+  if(isRadio) return;
+  if(currentIdx<allSongs.length-1) playSong(currentIdx+1);
+  else { isPlaying=false; updatePlayIcons(); refreshList(); }
 }
 
 function nextSong() {
-  if (currentSongIndex < allSongs.length - 1) playSong(currentSongIndex + 1);
-  else { isPlaying = false; updatePlayIcon(); refreshSongList(); }
+  if(isRadio) return;
+  if(currentIdx<allSongs.length-1) playSong(currentIdx+1);
 }
 
 function closePlayer() {
-  audio.pause();
-  isPlaying = false;
-  currentSongIndex = -1;
+  audio.pause(); audio.src='';
+  isPlaying=false; currentIdx=-1; isRadio=false;
   document.getElementById('mini-player').classList.remove('show');
-  refreshSongList();
+  closeFullPlayer(); refreshList();
 }
 
-function updateProgress() {
-  if (!audio.duration) return;
-  const pct = (audio.currentTime / audio.duration) * 100;
-  document.getElementById('mp-progress-fill').style.width = pct + '%';
-  document.getElementById('mp-current').textContent = formatTime(audio.currentTime);
+function updatePlayIcons() {
+  const playing=!audio.paused;
+  const playPath='<path d="M8 5v14l11-7z"/>';
+  const pausePath='<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+  document.getElementById('mp-play-icon').innerHTML=playing?pausePath:playPath;
+  document.getElementById('fp-play-icon').innerHTML=playing?pausePath:playPath;
 }
 
-function seekAudio(e) {
-  if (!audio.duration) return;
-  const bar = e.currentTarget;
-  const rect = bar.getBoundingClientRect();
-  const pct = (e.clientX - rect.left) / rect.width;
-  audio.currentTime = pct * audio.duration;
+function onTimeUpdate() {
+  if(!audio.duration) return;
+  const pct=(audio.currentTime/audio.duration)*100;
+  document.getElementById('mp-bar-fill').style.width=pct+'%';
+  document.getElementById('fp-bar-fill').style.width=pct+'%';
+  const cur=fmtTime(audio.currentTime);
+  document.getElementById('mp-cur').textContent=cur;
+  document.getElementById('fp-cur').textContent=cur;
 }
 
-function formatTime(s) {
-  if (!s || isNaN(s)) return '0:00';
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60).toString().padStart(2, '0');
+function onMetadata() {
+  const dur=fmtTime(audio.duration);
+  document.getElementById('mp-dur').textContent=dur;
+  document.getElementById('fp-dur').textContent=dur;
+}
+
+function fmtTime(s) {
+  if(!s||isNaN(s)) return '0:00';
+  const m=Math.floor(s/60), sec=Math.floor(s%60).toString().padStart(2,'0');
   return `${m}:${sec}`;
 }
 
-function refreshSongList() {
-  const list = document.getElementById('song-list');
-  if (allSongs.length > 0) renderSongList(allSongs, list);
-  const sResults = document.getElementById('search-results');
-  if (sResults.children.length > 0) searchSongs();
+function setupProgressBar(id, isMini) {
+  const el=document.getElementById(id);
+  if(!el) return;
+  const seek=(e)=>{
+    if(!audio.duration) return;
+    const rect=el.getBoundingClientRect();
+    const x=e.touches?e.touches[0].clientX:e.clientX;
+    const pct=Math.max(0,Math.min(1,(x-rect.left)/rect.width));
+    audio.currentTime=pct*audio.duration;
+    e.stopPropagation();
+  };
+  el.addEventListener('click',seek);
+  el.addEventListener('touchstart',seek,{passive:true});
+  let dragging=false;
+  el.addEventListener('mousedown',()=>dragging=true);
+  document.addEventListener('mousemove',(e)=>{ if(dragging) seek(e); });
+  document.addEventListener('mouseup',()=>dragging=false);
 }
 
-async function deleteSong(filename, index) {
-  if (!confirm('Möchtest du diesen Song löschen?')) return;
-  if (index === currentSongIndex) closePlayer();
+function openFullPlayer() {
+  document.getElementById('full-player').classList.add('show');
+}
+function closeFullPlayer() {
+  document.getElementById('full-player').classList.remove('show');
+}
+
+async function deleteSong(filename,idx) {
+  if(!confirm('Song löschen?')) return;
+  if(idx===currentIdx) closePlayer();
   try {
-    await fetch(`${SERVER}/delete/${encodeURIComponent(filename)}`, {method:'DELETE'});
-    allSongs.splice(index, 1);
-    if (currentSongIndex > index) currentSongIndex--;
-    document.getElementById('lib-count').textContent = allSongs.length + ' Songs';
-    const list = document.getElementById('song-list');
-    if (allSongs.length === 0) {
-      list.innerHTML = '';
-      document.getElementById('lib-empty').style.display = 'block';
-    } else {
-      renderSongList(allSongs, list);
-    }
-  } catch(e) {
-    alert('Fehler beim Löschen');
+    await fetch(`${SERVER}/delete/${encodeURIComponent(filename)}`,{method:'DELETE'});
+    allSongs.splice(idx,1);
+    localStorage.setItem('youvin_songs', JSON.stringify(allSongs));
+    if(currentIdx>idx) currentIdx--;
+    document.getElementById('lib-count').textContent=allSongs.length+' Songs';
+    const list=document.getElementById('song-list');
+    if(allSongs.length===0){ list.innerHTML=''; document.getElementById('lib-empty').style.display='block'; }
+    else renderSongs(allSongs,list);
+    renderHome();
+  } catch(e){ alert('Fehler beim Löschen'); }
+}
+
+function downloadToPhone(filename) {
+  const url = `${SERVER}/play/${encodeURIComponent(filename)}`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function searchSongs() {
+  const q=document.getElementById('search-input').value.trim().toLowerCase();
+  const results=document.getElementById('search-results');
+  const hint=document.getElementById('search-hint');
+  if(!q){ results.innerHTML=''; hint.style.display='block'; return; }
+  hint.style.display='none';
+  const found=allSongs.filter(s=>s.title.toLowerCase().includes(q));
+  if(found.length===0){
+    results.innerHTML='<div style="text-align:center;padding:40px;color:#8E8E93;">Keine Ergebnisse</div>';
+  } else {
+    renderSongs(found,results);
   }
 }
 
-// ===== SEARCH =====
-function searchSongs() {
-  const q = document.getElementById('search-input').value.trim().toLowerCase();
-  const results = document.getElementById('search-results');
-  const empty = document.getElementById('search-empty');
-  if (!q) { results.innerHTML = ''; empty.style.display = 'block'; return; }
-  const filtered = allSongs.filter(s => s.title.toLowerCase().includes(q));
-  empty.style.display = filtered.length === 0 ? 'block' : 'none';
-  renderSongList(filtered, results);
-}
-
-// ===== DOWNLOAD =====
-function clearDlStatus() { document.getElementById('dl-status').textContent = ''; }
+function clearDlStatus(){ document.getElementById('dl-status').textContent=''; }
 
 async function startDownload() {
-  const url = document.getElementById('dl-url').value.trim();
-  const statusEl = document.getElementById('dl-status');
-  const btn = document.getElementById('dl-btn');
-  if (!url) { statusEl.textContent = '⚠️ Bitte einen Link eingeben'; statusEl.className = 'status-msg status-orange'; return; }
-  if (!url.startsWith('http')) { statusEl.textContent = '⚠️ Ungültiger Link'; statusEl.className = 'status-msg status-orange'; return; }
-
-  let sendFormat = 'mp3', sendQuality = '320';
-  if (selectedFormat === 'mp3-320') { sendFormat = 'mp3'; sendQuality = '320'; }
-  else if (selectedFormat === 'mp3-128') { sendFormat = 'mp3'; sendQuality = '128'; }
-  else if (selectedFormat === 'm4a') { sendFormat = 'm4a'; sendQuality = '192'; }
-  else if (selectedFormat === 'flac') { sendFormat = 'flac'; sendQuality = '0'; }
-  else if (selectedFormat.startsWith('mp4')) { sendFormat = 'mp4'; sendQuality = 'best'; }
-
-  btn.textContent = '⏳ Wird heruntergeladen...'; btn.disabled = true;
-  statusEl.textContent = '⏳ Verbinde mit Server...'; statusEl.className = 'status-msg status-blue';
-
+  const url=document.getElementById('dl-url').value.trim();
+  const statusEl=document.getElementById('dl-status');
+  const btn=document.getElementById('dl-btn');
+  if(!url){ statusEl.textContent='⚠️ Bitte einen Link eingeben'; statusEl.className='status-msg status-orange'; return; }
+  if(!url.startsWith('http')){ statusEl.textContent='⚠️ Ungültiger Link'; statusEl.className='status-msg status-orange'; return; }
+  let fmt='mp3', quality='320';
+  if(selectedFormat==='mp3-320'){fmt='mp3';quality='320';}
+  else if(selectedFormat==='mp3-128'){fmt='mp3';quality='128';}
+  else if(selectedFormat==='m4a'){fmt='m4a';quality='192';}
+  else if(selectedFormat==='flac'){fmt='flac';quality='0';}
+  else if(selectedFormat.startsWith('mp4')){fmt='mp4';quality='best';}
+  btn.textContent='⏳ Wird heruntergeladen...'; btn.disabled=true;
+  statusEl.textContent='⏳ Verbinde mit Server...'; statusEl.className='status-msg status-blue';
   try {
-    const res = await fetch(`${SERVER}/download`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({url, format: sendFormat, quality: sendQuality})
-    });
-    const data = await res.json();
-    if (res.ok && data.success) {
-      statusEl.textContent = '✅ Erfolgreich heruntergeladen!'; statusEl.className = 'status-msg status-green';
-      document.getElementById('dl-url').value = '';
-      await loadLibrary(); // تحديث المكتبة تلقائياً
+    const res=await fetch(`${SERVER}/download`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,format:fmt,quality})});
+    const data=await res.json();
+    if(res.ok&&data.success){
+      statusEl.textContent='✅ Erfolgreich heruntergeladen!'; statusEl.className='status-msg status-green';
+      document.getElementById('dl-url').value='';
+      await loadLibrary();
     } else {
-      statusEl.textContent = '❌ ' + (data.error || 'Fehler'); statusEl.className = 'status-msg status-red';
+      statusEl.textContent='❌ '+(data.error||'Fehler'); statusEl.className='status-msg status-red';
     }
-  } catch(e) {
-    statusEl.textContent = '❌ Server nicht erreichbar'; statusEl.className = 'status-msg status-red';
+  } catch(e){
+    statusEl.textContent='❌ Server nicht erreichbar'; statusEl.className='status-msg status-red';
   }
-  btn.textContent = '⬇ Herunterladen'; btn.disabled = false;
+  btn.textContent='⬇ Herunterladen'; btn.disabled=false;
 }
 
-// ===== PAYPAL =====
 function showPayPalScreen(plan) {
-  currentPlan = plan;
-  const isYearly = plan === 'yearly';
-  document.getElementById('pp-title').textContent = isYearly ? 'YouVin Yearly' : 'YouVin Lifetime';
-  document.getElementById('pp-desc').textContent = isYearly ? '€15 pro Jahr · €1.25/Monat' : 'Einmalige Zahlung · Für immer';
-  document.getElementById('pp-price').textContent = isYearly ? '€15' : '€30';
-  document.getElementById('pp-price').style.color = isYearly ? '#0A84FF' : '#FF2D55';
-  document.getElementById('pp-period').textContent = isYearly ? 'pro Jahr' : 'einmalig';
-  document.getElementById('pp-feature-lifetime').style.display = isYearly ? 'none' : 'block';
+  currentPlan=plan;
+  const y=plan==='yearly';
+  document.getElementById('pp-title').textContent=y?'YouVin Yearly':'YouVin Lifetime';
+  document.getElementById('pp-desc').textContent=y?'€15 pro Jahr':'Einmalige Zahlung';
+  document.getElementById('pp-price').textContent=y?'€15':'€30';
+  document.getElementById('pp-price').style.color=y?'#0A84FF':'#FF2D55';
+  document.getElementById('pp-period').textContent=y?'pro Jahr':'einmalig';
+  document.getElementById('pp-feature-lifetime').style.display=y?'none':'block';
   document.getElementById('paypal-screen').classList.add('show');
-  window.scrollTo(0,0);
-  setTimeout(renderPayPalButtons, 200);
+  setTimeout(renderPayPalButtons,200);
 }
-
-function closePayPalScreen() { document.getElementById('paypal-screen').classList.remove('show'); }
+function closePayPalScreen(){ document.getElementById('paypal-screen').classList.remove('show'); }
 
 function renderPayPalButtons() {
-  const container = document.getElementById('paypal-button-container');
-  if (!container) return;
-  container.innerHTML = '';
-  if (typeof paypal === 'undefined') {
-    container.innerHTML = '<div style="color:#FF2D55;padding:16px;text-align:center;">PayPal konnte nicht geladen werden.</div>';
-    return;
-  }
-  const amount = currentPlan === 'yearly' ? '15.00' : '30.00';
+  const c=document.getElementById('paypal-button-container');
+  c.innerHTML='';
+  if(typeof paypal==='undefined'){c.innerHTML='<div style="color:#FF2D55;padding:16px;text-align:center;">PayPal nicht geladen</div>';return;}
+  const amount=currentPlan==='yearly'?'15.00':'30.00';
   paypal.Buttons({
-    style: { layout:'vertical', color:'gold', shape:'rect', label:'paypal' },
-    createOrder: (data, actions) => actions.order.create({
-      purchase_units: [{ amount: { value: amount, currency_code: 'EUR' }, description: 'YouVin ' + (currentPlan === 'yearly' ? 'Yearly' : 'Lifetime') }]
-    }),
-    onApprove: (data, actions) => actions.order.capture().then(() => {
-      subType = currentPlan;
-      if (currentUser) { currentUser.subType = subType; localStorage.setItem('youvin_user', JSON.stringify(currentUser)); }
+    style:{layout:'vertical',color:'gold',shape:'rect',label:'paypal'},
+    createOrder:(d,a)=>a.order.create({purchase_units:[{amount:{value:amount,currency_code:'EUR'},description:'YouVin '+(currentPlan==='yearly'?'Yearly':'Lifetime')}]}),
+    onApprove:(d,a)=>a.order.capture().then(()=>{
+      subType=currentPlan;
+      if(currentUser){currentUser.subType=subType;localStorage.setItem('youvin_user',JSON.stringify(currentUser));}
       closePayPalScreen(); updateUI(); showTab('home');
-      alert(currentPlan === 'yearly' ? '✅ Yearly aktiviert!' : '✅ Lifetime aktiviert!');
+      alert(currentPlan==='yearly'?'✅ Yearly aktiviert!':'✅ Lifetime aktiviert!');
     }),
-    onError: () => alert('Zahlung fehlgeschlagen. Bitte erneut versuchen.')
+    onError:()=>alert('Zahlung fehlgeschlagen.')
   }).render('#paypal-button-container');
 }
-
-function openGooglePlay() { window.open('https://play.google.com/store/apps/details?id=com.youvin.app', '_blank'); }
 </script>
 </body>
 </html>
