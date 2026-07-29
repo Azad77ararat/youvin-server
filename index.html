@@ -668,9 +668,25 @@ async function playSong(idx) {
       headers: {'ngrok-skip-browser-warning': 'true'}
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
-    const blob = await res.blob();
-    // إذا المستخدم بدّل أغنية تانية أثناء التحميل، تجاهل هالنتيجة
+
+    const total = Number(res.headers.get('Content-Length')) || 0;
+    let loaded = 0;
+    const reader = res.body.getReader();
+    const chunks = [];
+    while(true) {
+      const {done, value} = await reader.read();
+      if(myRequestId !== playRequestId) { reader.cancel(); return; }
+      if(done) break;
+      chunks.push(value);
+      loaded += value.length;
+      if(total > 0) {
+        const pct = Math.round((loaded/total)*100);
+        document.getElementById('mp-title').textContent = `⏳ ${pct}% ${title}`;
+      }
+    }
     if(myRequestId !== playRequestId) return;
+
+    const blob = new Blob(chunks);
     if(currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
     currentBlobUrl = URL.createObjectURL(blob);
     audio.src = currentBlobUrl;
