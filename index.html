@@ -432,7 +432,7 @@ const RADIOS = [
 let isRegister=false, currentUser=null, subType='free', trialDays=7;
 let selectedFormat='mp3-320';
 let currentPlan='lifetime';
-let allSongs=[], currentIdx=-1, isPlaying=false, isRadio=false, currentBlobUrl=null;
+let allSongs=[], currentIdx=-1, isPlaying=false, isRadio=false, currentBlobUrl=null, playRequestId=0;
 let radioUrl='';
 
 const audio = document.getElementById('audio-el');
@@ -656,7 +656,8 @@ async function playSong(idx) {
   isRadio=false; currentIdx=idx;
   const song=allSongs[idx];
   const title=song.title;
-  document.getElementById('mp-title').textContent=title;
+  const myRequestId = ++playRequestId;
+  document.getElementById('mp-title').textContent='⏳ '+title;
   document.getElementById('mp-ext').textContent=song.ext.toUpperCase();
   document.getElementById('fp-song-title').textContent=title;
   document.getElementById('fp-song-artist').textContent='YouVin';
@@ -668,11 +669,15 @@ async function playSong(idx) {
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
     const blob = await res.blob();
+    // إذا المستخدم بدّل أغنية تانية أثناء التحميل، تجاهل هالنتيجة
+    if(myRequestId !== playRequestId) return;
     if(currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
     currentBlobUrl = URL.createObjectURL(blob);
     audio.src = currentBlobUrl;
+    document.getElementById('mp-title').textContent=title;
     await audio.play();
   } catch(e) {
+    if(myRequestId !== playRequestId) return;
     console.error('Play error:', e);
     document.getElementById('mp-title').textContent = '❌ Fehler beim Laden';
   }
