@@ -482,7 +482,7 @@ const RADIOS = [
 let isRegister=false, currentUser=null, subType='free', trialDays=7;
 let selectedFormat='mp3-320';
 let currentPlan='lifetime';
-let allSongs=[], currentIdx=-1, isPlaying=false, isRadio=false, currentBlobUrl=null, playRequestId=0;
+let allSongs=[], currentIdx=-1, isPlaying=false, isRadio=false, currentBlobUrl=null, playRequestId=0, playingTitle='';
 let radioUrl='';
 
 const audio = document.getElementById('audio-el');
@@ -538,7 +538,7 @@ function renderRadio() {
 
 function playRadio(i) {
   const r = RADIOS[i];
-  isRadio=true; currentIdx=-1;
+  isRadio=true; currentIdx=-1; playingTitle=r.name;
   audio.src=r.url; audio.play();
   document.querySelectorAll('.radio-item').forEach(el=>el.classList.remove('playing'));
   document.getElementById('radio-'+i).classList.add('playing');
@@ -703,13 +703,15 @@ function refreshList() {
 
 async function playSong(idx) {
   if(idx<0||idx>=allSongs.length) return;
-  isRadio=false; currentIdx=idx;
+  isRadio=false;
   const song=allSongs[idx];
   const title=song.title;
   const myRequestId = ++playRequestId;
+  const previousIdx = currentIdx;
+  const previousTitle = playingTitle;
+
+  currentIdx=idx;
   document.getElementById('mp-ext').textContent=song.ext.toUpperCase();
-  document.getElementById('fp-song-title').textContent=title;
-  document.getElementById('fp-song-artist').textContent='YouVin';
   document.getElementById('mini-player').classList.add('show');
   refreshList();
 
@@ -720,7 +722,10 @@ async function playSong(idx) {
       if(currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
       currentBlobUrl = URL.createObjectURL(cached);
       audio.src = currentBlobUrl;
+      playingTitle = title;
       document.getElementById('mp-title').textContent = '💾 '+title;
+      document.getElementById('fp-song-title').textContent=title;
+      document.getElementById('fp-song-artist').textContent='YouVin';
       await audio.play();
       return;
     }
@@ -758,12 +763,24 @@ async function playSong(idx) {
     if(currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
     currentBlobUrl = URL.createObjectURL(blob);
     audio.src = currentBlobUrl;
+    playingTitle = title;
     document.getElementById('mp-title').textContent=title;
+    document.getElementById('fp-song-title').textContent=title;
+    document.getElementById('fp-song-artist').textContent='YouVin';
     await audio.play();
   } catch(e) {
     if(myRequestId !== playRequestId) return;
     console.error('Play error:', e);
-    document.getElementById('mp-title').textContent = '❌ Fehler beim Laden';
+    // رجّعي الوضع لآخر أغنية كانت شغالة فعلياً، وبيّني تنبيه واضح
+    currentIdx = previousIdx;
+    refreshList();
+    if(previousTitle) {
+      document.getElementById('mp-title').textContent = previousTitle;
+      document.getElementById('fp-song-title').textContent = previousTitle;
+    } else {
+      document.getElementById('mini-player').classList.remove('show');
+    }
+    alert('❌ "'+title+'" ist nicht offline verfügbar.\nServer muss online sein, um sie zum ersten Mal zu laden.');
   }
 }
 
@@ -789,7 +806,7 @@ function nextSong() {
 
 function closePlayer() {
   audio.pause(); audio.src='';
-  isPlaying=false; currentIdx=-1; isRadio=false;
+  isPlaying=false; currentIdx=-1; isRadio=false; playingTitle='';
   document.getElementById('mini-player').classList.remove('show');
   closeFullPlayer(); refreshList();
 }
