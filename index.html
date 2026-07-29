@@ -420,6 +420,56 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 <script>
 const SERVER = 'https://fencing-purgatory-lifter.ngrok-free.dev';
 
+// ═══════════════════════════════════
+// TEXZĪN DA'IM (IndexedDB) - تخزين الأغاني محلياً بشكل دائم
+// ═══════════════════════════════════
+let dbPromise = null;
+function openSongDB() {
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open('youvin-cache', 1);
+    req.onupgradeneeded = () => {
+      req.result.createObjectStore('songs');
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  return dbPromise;
+}
+async function getCachedSong(filename) {
+  try {
+    const db = await openSongDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction('songs', 'readonly');
+      const req = tx.objectStore('songs').get(filename);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  } catch(e) { return null; }
+}
+async function saveCachedSong(filename, blob) {
+  try {
+    const db = await openSongDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('songs', 'readwrite');
+      tx.objectStore('songs').put(blob, filename);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch(e) { console.error('Cache save error:', e); }
+}
+async function deleteCachedSong(filename) {
+  try {
+    const db = await openSongDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('songs', 'readwrite');
+      tx.objectStore('songs').delete(filename);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch(e) {}
+}
+
 const RADIOS = [
   {name:'YouVin Pop', genre:'Pop · Deutsch', emoji:'🎵', url:'https://streams.br.de/br-pop_2.m3u8'},
   {name:'Rock Antenne', genre:'Rock · Classic', emoji:'🎸', url:'https://stream.rockantenne.de/rockantenne/stream/icecast'},
@@ -657,12 +707,29 @@ async function playSong(idx) {
   const song=allSongs[idx];
   const title=song.title;
   const myRequestId = ++playRequestId;
-  document.getElementById('mp-title').textContent='⏳ '+title;
   document.getElementById('mp-ext').textContent=song.ext.toUpperCase();
   document.getElementById('fp-song-title').textContent=title;
   document.getElementById('fp-song-artist').textContent='YouVin';
   document.getElementById('mini-player').classList.add('show');
   refreshList();
+
+  // 1) جرّبي أول من الذاكرة الدائمة (مو محتاج نت ولا سيرفر)
+  try {
+    const cached = await getCachedSong(song.filename);
+    if(cached && myRequestId === playRequestId) {
+      if(currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+      currentBlobUrl = URL.createObjectURL(cached);
+      audio.src = currentBlobUrl;
+      document.getElementById('mp-title').textContent = '💾 '+title;
+      await audio.play();
+      return;
+    }
+  } catch(e) {}
+
+  if(myRequestId !== playRequestId) return;
+  document.getElementById('mp-title').textContent='⏳ '+title;
+
+  // 2) مو موجودة بالكاش، حمّليها من السيرفر
   try {
     const res = await fetch(`${SERVER}/play/${encodeURIComponent(song.filename)}`, {
       headers: {'ngrok-skip-browser-warning': 'true'}
@@ -687,6 +754,7 @@ async function playSong(idx) {
     if(myRequestId !== playRequestId) return;
 
     const blob = new Blob(chunks);
+    saveCachedSong(song.filename, blob); // خزّنيها دائم للمرات الجاية
     if(currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
     currentBlobUrl = URL.createObjectURL(blob);
     audio.src = currentBlobUrl;
@@ -787,6 +855,7 @@ async function deleteSong(filename,idx) {
   if(idx===currentIdx) closePlayer();
   try {
     await fetch(`${SERVER}/delete/${encodeURIComponent(filename)}`,{method:'DELETE',headers:{'ngrok-skip-browser-warning':'true'}});
+    deleteCachedSong(filename);
     allSongs.splice(idx,1);
     localStorage.setItem('youvin_songs', JSON.stringify(allSongs));
     if(currentIdx>idx) currentIdx--;
