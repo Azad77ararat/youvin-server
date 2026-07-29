@@ -582,7 +582,7 @@ async function loadLibrary() {
 
   // ثانياً: تحديث من السيرفر في الخلفية
   try {
-    const res=await fetch(`${SERVER}/library`,{signal:AbortSignal.timeout(5000)});
+    const res=await fetch(`${SERVER}/library`,{signal:AbortSignal.timeout(5000),headers:{'ngrok-skip-browser-warning':'true'}});
     const data=await res.json();
     allSongs=data.songs||[];
     localStorage.setItem('youvin_songs', JSON.stringify(allSongs));
@@ -655,7 +655,7 @@ function playSong(idx) {
   if(idx<0||idx>=allSongs.length) return;
   isRadio=false; currentIdx=idx;
   const song=allSongs[idx];
-  audio.src=`${SERVER}/play/${encodeURIComponent(song.filename)}`;
+  audio.src=`${SERVER}/play/${encodeURIComponent(song.filename)}?ngrok-skip-browser-warning=true`;
   audio.play();
   const title=song.title;
   document.getElementById('mp-title').textContent=title;
@@ -753,7 +753,7 @@ async function deleteSong(filename,idx) {
   if(!confirm('Song löschen?')) return;
   if(idx===currentIdx) closePlayer();
   try {
-    await fetch(`${SERVER}/delete/${encodeURIComponent(filename)}`,{method:'DELETE'});
+    await fetch(`${SERVER}/delete/${encodeURIComponent(filename)}`,{method:'DELETE',headers:{'ngrok-skip-browser-warning':'true'}});
     allSongs.splice(idx,1);
     localStorage.setItem('youvin_songs', JSON.stringify(allSongs));
     if(currentIdx>idx) currentIdx--;
@@ -766,7 +766,7 @@ async function deleteSong(filename,idx) {
 }
 
 function downloadToPhone(filename) {
-  const url = `${SERVER}/play/${encodeURIComponent(filename)}`;
+  const url = `${SERVER}/play/${encodeURIComponent(filename)}?ngrok-skip-browser-warning=true`;
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
@@ -807,7 +807,7 @@ async function startDownload() {
   btn.textContent='⏳ Wird heruntergeladen...'; btn.disabled=true;
   statusEl.textContent='⏳ Verbinde mit Server...'; statusEl.className='status-msg status-blue';
   try {
-    const res=await fetch(`${SERVER}/download`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,format:fmt,quality})});
+    const res=await fetch(`${SERVER}/download`,{method:'POST',headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},body:JSON.stringify({url,format:fmt,quality})});
     const data=await res.json();
     if(res.ok&&data.success){
       statusEl.textContent='✅ Erfolgreich heruntergeladen!'; statusEl.className='status-msg status-green';
