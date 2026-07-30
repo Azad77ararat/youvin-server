@@ -605,7 +605,10 @@ window.onload = () => {
   audio.addEventListener('timeupdate', onTimeUpdate);
   audio.addEventListener('ended', onEnded);
   audio.addEventListener('loadedmetadata', onMetadata);
-  audio.addEventListener('play', ()=>{ isPlaying=true; updatePlayIcons(); refreshList(); });
+  audio.addEventListener('play', ()=>{
+    if(audioCtx && audioCtx.state !== 'running') audioCtx.resume();
+    isPlaying=true; updatePlayIcons(); refreshList();
+  });
   audio.addEventListener('pause', ()=>{ isPlaying=false; updatePlayIcons(); refreshList(); });
 
   setupProgressBar('mp-bar-wrap');
@@ -821,6 +824,7 @@ async function playSong(idx) {
       document.getElementById('mp-title').textContent = '💾 '+title;
       document.getElementById('fp-song-title').textContent=title;
       document.getElementById('fp-song-artist').textContent='YouVin';
+      if(audioCtx && audioCtx.state !== 'running') audioCtx.resume();
       await audio.play();
       return;
     }
@@ -879,6 +883,7 @@ async function playSong(idx) {
     document.getElementById('mp-title').textContent=title;
     document.getElementById('fp-song-title').textContent=title;
     document.getElementById('fp-song-artist').textContent='YouVin';
+    if(audioCtx && audioCtx.state !== 'running') audioCtx.resume();
     await audio.play();
   } catch(e) {
     console.error('Playback start error:', e);
@@ -887,6 +892,7 @@ async function playSong(idx) {
 }
 
 function togglePlay() {
+  if(audioCtx && audioCtx.state !== 'running') audioCtx.resume();
   if(audio.paused) audio.play(); else audio.pause();
 }
 
