@@ -107,6 +107,20 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 /* FULL PLAYER */
 #full-player { display:none; position:fixed; inset:0; z-index:200; overflow:hidden; }
 #full-player.show { display:flex; flex-direction:column; }
+.fp-grabber { width:36px; height:5px; background:rgba(255,255,255,0.35); border-radius:99px; margin:10px auto 0; }
+.fp-queue { position:absolute; left:0; right:0; bottom:0; max-height:65%; background:rgba(20,20,22,0.98); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border-radius:20px 20px 0 0; transform:translateY(100%); transition:transform 0.3s ease; overflow-y:auto; padding:18px 16px 30px; z-index:20; box-shadow:0 -8px 30px rgba(0,0,0,0.4); }
+.fp-queue.show { transform:translateY(0); }
+.fp-queue-header { font-size:17px; font-weight:700; color:#fff; }
+.fp-queue-sub { font-size:13px; color:#c9a084; margin-bottom:14px; }
+.fp-queue-item { display:flex; align-items:center; gap:12px; padding:10px 2px; border-bottom:1px solid rgba(255,255,255,0.08); cursor:pointer; }
+.fp-queue-icon { width:36px; height:36px; border-radius:8px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.fp-queue-info { flex:1; min-width:0; }
+.fp-queue-title { font-size:14px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fp-queue-artist { font-size:12px; color:#999; }
+.fp-queue-handle { color:#888; font-size:16px; padding:4px; }
+.fp-bottom-icons { display:flex; justify-content:flex-end; padding:18px 4px 0; }
+.fp-icon-btn { background:none; border:none; color:rgba(255,255,255,0.75); width:40px; height:40px; display:flex; align-items:center; justify-content:center; }
+.fp-icon-btn svg { width:22px; height:22px; fill:currentColor; }
 .fp-bg { position:absolute; inset:0; background:linear-gradient(180deg,#2C1810 0%,#1C1C1E 100%); }
 .fp-bg-img { position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(40px) brightness(0.4); opacity:0; transition:opacity 0.5s; }
 .fp-bg-img.loaded { opacity:1; }
@@ -368,6 +382,7 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
   <div class="fp-bg"></div>
   <div class="fp-bg-img" id="fp-bg-img"></div>
   <div class="fp-content">
+    <div class="fp-grabber" id="fp-grabber"></div>
     <div class="fp-header">
       <button class="fp-down" onclick="closeFullPlayer()">
         <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
@@ -399,6 +414,16 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
       <button class="fp-play-btn" id="fp-play-btn" onclick="togglePlay()"><svg viewBox="0 0 24 24" id="fp-play-icon"><path d="M8 5v14l11-7z"/></svg></button>
       <button class="fp-btn" onclick="nextSong()"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
     </div>
+    <div class="fp-bottom-icons">
+      <button class="fp-icon-btn" onclick="toggleQueue()">
+        <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div id="fp-queue" class="fp-queue">
+    <div class="fp-queue-header">Wiedergabe fortsetzen</div>
+    <div class="fp-queue-sub">Von Issa❤️</div>
+    <div id="fp-queue-list"></div>
   </div>
 </div>
 
@@ -926,6 +951,77 @@ function openFullPlayer() {
 }
 function closeFullPlayer() {
   document.getElementById('full-player').classList.remove('show');
+  document.getElementById('fp-queue').classList.remove('show');
+}
+
+// سحب لتحت بالإصبع لإغلاق المشغل الكامل (متل آبل ميوزك)
+(function setupFullPlayerDrag(){
+  const fp = document.getElementById('full-player');
+  const dragZones = [
+    document.querySelector('.fp-header'),
+    document.getElementById('fp-cover'),
+    document.getElementById('fp-grabber')
+  ].filter(Boolean);
+  let startY=0, dy=0, dragging=false;
+
+  const start=(e)=>{
+    dragging=true; dy=0;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    fp.style.transition='none';
+  };
+  const move=(e)=>{
+    if(!dragging) return;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    dy = Math.max(0, y-startY);
+    fp.style.transform = `translateY(${dy}px)`;
+  };
+  const end=()=>{
+    if(!dragging) return;
+    dragging=false;
+    fp.style.transition='transform 0.25s ease';
+    if(dy>110){
+      fp.style.transform='translateY(100%)';
+      setTimeout(()=>{ closeFullPlayer(); fp.style.transform=''; },200);
+    } else {
+      fp.style.transform='';
+    }
+  };
+  dragZones.forEach(el=>{
+    el.addEventListener('touchstart', start, {passive:true});
+    el.addEventListener('touchmove', move, {passive:true});
+    el.addEventListener('touchend', end);
+    el.addEventListener('mousedown', start);
+  });
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseup', end);
+})();
+
+// قائمة الانتظار (Queue)
+function toggleQueue() {
+  const q = document.getElementById('fp-queue');
+  if(q.classList.contains('show')) { q.classList.remove('show'); return; }
+  renderQueue();
+  q.classList.add('show');
+}
+function renderQueue() {
+  const list = document.getElementById('fp-queue-list');
+  if(isRadio || currentIdx<0) {
+    list.innerHTML = '<div style="opacity:.6;padding:16px 2px;">Keine Warteschlange</div>';
+    return;
+  }
+  const upcoming = allSongs.slice(currentIdx+1);
+  if(upcoming.length===0) {
+    list.innerHTML = '<div style="opacity:.6;padding:16px 2px;">Keine weiteren Songs</div>';
+    return;
+  }
+  list.innerHTML = upcoming.map((s,i)=>{
+    const realIdx = currentIdx+1+i;
+    return `<div class="fp-queue-item" onclick="playSong(${realIdx});document.getElementById('fp-queue').classList.remove('show');">
+      <div class="fp-queue-icon">♪</div>
+      <div class="fp-queue-info"><div class="fp-queue-title">${s.title}</div></div>
+      <div class="fp-queue-handle">☰</div>
+    </div>`;
+  }).join('');
 }
 
 async function deleteSong(filename,idx) {
