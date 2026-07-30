@@ -499,6 +499,24 @@ let radioUrl='';
 
 const audio = document.getElementById('audio-el');
 
+// فتح قفل الصوت (iOS Safari) من أول لمسة بالتطبيق، عشان play() تشتغل حتى بعد تحميل طويل لاحقاً
+let audioUnlocked = false;
+function unlockAudio() {
+  if(audioUnlocked) return;
+  audioUnlocked = true;
+  const silence = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQxAADB8AhSmxhIIEVCSiJrDCQBTcU3pkZAQVYAA';
+  const originalSrc = audio.src;
+  audio.src = silence;
+  audio.play().then(()=>{
+    audio.pause();
+    audio.src = originalSrc || '';
+  }).catch(()=>{
+    audio.src = originalSrc || '';
+  });
+}
+document.addEventListener('touchstart', unlockAudio, {once:true, passive:true});
+document.addEventListener('click', unlockAudio, {once:true});
+
 const formats = [
   {id:'mp3-320',label:'MP3 · 320 kbps'},
   {id:'mp3-128',label:'MP3 · 128 kbps'},
@@ -747,6 +765,7 @@ async function playSong(idx) {
   document.getElementById('mp-title').textContent='⏳ '+title;
 
   // 2) مو موجودة بالكاش، حمّليها من السيرفر
+  let downloadedBlob = null;
   try {
     const res = await fetch(`${SERVER}/play/${encodeURIComponent(song.filename)}`, {
       headers: {'ngrok-skip-browser-warning': 'true'}
@@ -769,21 +788,11 @@ async function playSong(idx) {
       }
     }
     if(myRequestId !== playRequestId) return;
-
-    const blob = new Blob(chunks);
-    saveCachedSong(song.filename, blob); // خزّنيها دائم للمرات الجاية
-    if(currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
-    currentBlobUrl = URL.createObjectURL(blob);
-    audio.src = currentBlobUrl;
-    playingTitle = title;
-    document.getElementById('mp-title').textContent=title;
-    document.getElementById('fp-song-title').textContent=title;
-    document.getElementById('fp-song-artist').textContent='YouVin';
-    await audio.play();
+    downloadedBlob = new Blob(chunks);
+    saveCachedSong(song.filename, downloadedBlob); // خزّنيها دائم للمرات الجاية (حتى لو فشل التشغيل هلق)
   } catch(e) {
     if(myRequestId !== playRequestId) return;
-    console.error('Play error:', e);
-    // رجّعي الوضع لآخر أغنية كانت شغالة فعلياً، وبيّني تنبيه واضح
+    console.error('Download error:', e);
     currentIdx = previousIdx;
     refreshList();
     if(previousTitle) {
@@ -792,7 +801,23 @@ async function playSong(idx) {
     } else {
       document.getElementById('mini-player').classList.remove('show');
     }
-    alert('❌ "'+title+'" ist nicht offline verfügbar.\nServer muss online sein, um sie zum ersten Mal zu laden.');
+    alert('❌ "'+title+'" konnte nicht geladen werden.\nPrüfe ob der Server online ist.');
+    return;
+  }
+
+  // 3) الملف اتحمّل بنجاح وانخزن. جربي شغّليه — حتى لو فشل التشغيل هلق، الأغنية موجودة وبتشتغل بالمرة الجاية
+  try {
+    if(currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = URL.createObjectURL(downloadedBlob);
+    audio.src = currentBlobUrl;
+    playingTitle = title;
+    document.getElementById('mp-title').textContent=title;
+    document.getElementById('fp-song-title').textContent=title;
+    document.getElementById('fp-song-artist').textContent='YouVin';
+    await audio.play();
+  } catch(e) {
+    console.error('Playback start error:', e);
+    document.getElementById('mp-title').textContent = '💾 '+title+' — Play antippen';
   }
 }
 
