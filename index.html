@@ -931,7 +931,7 @@ function updatePlayIcons() {
 }
 
 function onTimeUpdate() {
-  if(!audio.duration) return;
+  if(!isFinite(audio.duration)||audio.duration<=0) return;
   const pct=(audio.currentTime/audio.duration)*100;
   document.getElementById('mp-bar-fill').style.width=pct+'%';
   document.getElementById('fp-bar-fill').style.width=pct+'%';
@@ -951,7 +951,7 @@ function onMetadata() {
 }
 
 function fmtTime(s) {
-  if(!s||isNaN(s)) return '0:00';
+  if(!isFinite(s)||s<0) return '0:00';
   const m=Math.floor(s/60), sec=Math.floor(s%60).toString().padStart(2,'0');
   return `${m}:${sec}`;
 }
