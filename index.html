@@ -97,8 +97,11 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .mp-play { background:#FF2D55; width:38px; height:38px; }
 .mp-play svg { width:20px; height:20px; }
 .mp-close-btn { background:none; border:none; color:#8E8E93; font-size:16px; cursor:pointer; padding:0 2px; }
-.mp-bar-wrap { width:100%; height:4px; background:rgba(255,255,255,0.15); border-radius:99px; cursor:pointer; position:relative; touch-action:none; }
-.mp-bar-fill { height:100%; background:#FF2D55; border-radius:99px; pointer-events:none; }
+.mp-bar-wrap { width:100%; height:20px; display:flex; align-items:center; cursor:pointer; position:relative; touch-action:none; }
+.mp-bar-track { width:100%; height:4px; background:rgba(255,255,255,0.15); border-radius:99px; position:relative; }
+.mp-bar-fill { position:absolute; top:0; left:0; height:100%; background:#FF2D55; border-radius:99px; pointer-events:none; }
+.mp-bar-thumb { position:absolute; top:50%; width:11px; height:11px; background:#fff; border-radius:50%; transform:translate(-50%,-50%); pointer-events:none; box-shadow:0 1px 3px rgba(0,0,0,0.5); transition:transform 0.15s ease; }
+.mp-bar-wrap.dragging .mp-bar-thumb { transform:translate(-50%,-50%) scale(1.5); }
 .mp-times { display:flex; justify-content:space-between; font-size:10px; color:#8E8E93; margin-top:4px; }
 
 /* FULL PLAYER */
@@ -121,9 +124,12 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .fp-song-title { font-size:22px; font-weight:800; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .fp-song-artist { font-size:15px; color:#8E8E93; }
 .fp-progress { margin-bottom:8px; }
-.fp-bar-wrap { width:100%; height:5px; background:rgba(255,255,255,0.2); border-radius:99px; cursor:pointer; touch-action:none; position:relative; }
-.fp-bar-fill { height:100%; background:#FF2D55; border-radius:99px; pointer-events:none; transition:width 0.1s linear; }
-.fp-times { display:flex; justify-content:space-between; font-size:12px; color:#8E8E93; margin-top:6px; }
+.fp-bar-wrap { width:100%; height:28px; display:flex; align-items:center; cursor:pointer; touch-action:none; position:relative; }
+.fp-bar-track { width:100%; height:5px; background:rgba(255,255,255,0.2); border-radius:99px; position:relative; }
+.fp-bar-fill { position:absolute; top:0; left:0; height:100%; background:#FF2D55; border-radius:99px; pointer-events:none; transition:width 0.1s linear; }
+.fp-bar-thumb { position:absolute; top:50%; width:14px; height:14px; background:#fff; border-radius:50%; transform:translate(-50%,-50%); pointer-events:none; box-shadow:0 1px 4px rgba(0,0,0,0.5); transition:transform 0.15s ease; }
+.fp-bar-wrap.dragging .fp-bar-thumb { transform:translate(-50%,-50%) scale(1.5); }
+.fp-times { display:flex; justify-content:space-between; font-size:12px; color:#8E8E93; margin-top:2px; font-variant-numeric:tabular-nums; }
 .fp-controls { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
 .fp-btn { width:48px; height:48px; background:none; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
 .fp-btn svg { width:28px; height:28px; fill:white; }
@@ -349,7 +355,10 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
     </div>
   </div>
   <div class="mp-bar-wrap" id="mp-bar-wrap">
-    <div class="mp-bar-fill" id="mp-bar-fill" style="width:0%"></div>
+    <div class="mp-bar-track">
+      <div class="mp-bar-fill" id="mp-bar-fill" style="width:0%"></div>
+      <div class="mp-bar-thumb" id="mp-bar-thumb" style="left:0%"></div>
+    </div>
   </div>
   <div class="mp-times"><span id="mp-cur">0:00</span><span id="mp-dur">0:00</span></div>
 </div>
@@ -378,9 +387,12 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
     </div>
     <div class="fp-progress">
       <div class="fp-bar-wrap" id="fp-bar-wrap">
-        <div class="fp-bar-fill" id="fp-bar-fill" style="width:0%"></div>
+        <div class="fp-bar-track">
+          <div class="fp-bar-fill" id="fp-bar-fill" style="width:0%"></div>
+          <div class="fp-bar-thumb" id="fp-bar-thumb" style="left:0%"></div>
+        </div>
       </div>
-      <div class="fp-times"><span id="fp-cur">0:00</span><span id="fp-dur">0:00</span></div>
+      <div class="fp-times"><span id="fp-cur">0:00</span><span id="fp-dur">-0:00</span></div>
     </div>
     <div class="fp-controls">
       <button class="fp-btn" onclick="prevSong()"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
@@ -513,8 +525,8 @@ window.onload = () => {
   audio.addEventListener('play', ()=>{ isPlaying=true; updatePlayIcons(); refreshList(); });
   audio.addEventListener('pause', ()=>{ isPlaying=false; updatePlayIcons(); refreshList(); });
 
-  setupProgressBar('mp-bar-wrap', true);
-  setupProgressBar('fp-bar-wrap', false);
+  setupProgressBar('mp-bar-wrap');
+  setupProgressBar('fp-bar-wrap');
 };
 
 function renderFormats() {
@@ -824,15 +836,19 @@ function onTimeUpdate() {
   const pct=(audio.currentTime/audio.duration)*100;
   document.getElementById('mp-bar-fill').style.width=pct+'%';
   document.getElementById('fp-bar-fill').style.width=pct+'%';
+  document.getElementById('mp-bar-thumb').style.left=pct+'%';
+  document.getElementById('fp-bar-thumb').style.left=pct+'%';
   const cur=fmtTime(audio.currentTime);
   document.getElementById('mp-cur').textContent=cur;
   document.getElementById('fp-cur').textContent=cur;
+  const remaining=Math.max(0,audio.duration-audio.currentTime);
+  document.getElementById('fp-dur').textContent='-'+fmtTime(remaining);
 }
 
 function onMetadata() {
   const dur=fmtTime(audio.duration);
   document.getElementById('mp-dur').textContent=dur;
-  document.getElementById('fp-dur').textContent=dur;
+  document.getElementById('fp-dur').textContent='-'+dur;
 }
 
 function fmtTime(s) {
@@ -841,23 +857,43 @@ function fmtTime(s) {
   return `${m}:${sec}`;
 }
 
-function setupProgressBar(id, isMini) {
+function setupProgressBar(id) {
   const el=document.getElementById(id);
   if(!el) return;
-  const seek=(e)=>{
-    if(!audio.duration) return;
+  let dragging=false;
+  const posFromEvent=(e)=>{
     const rect=el.getBoundingClientRect();
     const x=e.touches?e.touches[0].clientX:e.clientX;
-    const pct=Math.max(0,Math.min(1,(x-rect.left)/rect.width));
-    audio.currentTime=pct*audio.duration;
-    e.stopPropagation();
+    return Math.max(0,Math.min(1,(x-rect.left)/rect.width));
   };
-  el.addEventListener('click',seek);
-  el.addEventListener('touchstart',seek,{passive:true});
-  let dragging=false;
-  el.addEventListener('mousedown',()=>dragging=true);
-  document.addEventListener('mousemove',(e)=>{ if(dragging) seek(e); });
-  document.addEventListener('mouseup',()=>dragging=false);
+  const seek=(e)=>{
+    if(!audio.duration) return;
+    const pct=posFromEvent(e);
+    audio.currentTime=pct*audio.duration;
+  };
+  const onStart=(e)=>{
+    dragging=true;
+    el.classList.add('dragging');
+    seek(e);
+  };
+  const onMove=(e)=>{
+    if(!dragging) return;
+    seek(e);
+    if(e.cancelable) e.preventDefault();
+  };
+  const onEnd=()=>{
+    if(!dragging) return;
+    dragging=false;
+    el.classList.remove('dragging');
+  };
+  el.addEventListener('mousedown', onStart);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onEnd);
+  el.addEventListener('touchstart', onStart, {passive:true});
+  el.addEventListener('touchmove', onMove, {passive:false});
+  el.addEventListener('touchend', onEnd);
+  el.addEventListener('touchcancel', onEnd);
+  el.addEventListener('click', (e)=>e.stopPropagation());
 }
 
 function openFullPlayer() {
