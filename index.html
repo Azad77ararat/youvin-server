@@ -123,7 +123,7 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .fp-icon-btn svg { width:22px; height:22px; fill:currentColor; }
 .fp-volume-row { display:flex; align-items:center; gap:10px; padding:18px 2px 0; }
 .fp-vol-icon { width:16px; height:16px; fill:rgba(255,255,255,0.5); flex-shrink:0; }
-.fp-volume-slider { flex:1; -webkit-appearance:none; appearance:none; height:4px; border-radius:99px; background:rgba(255,255,255,0.2); outline:none; }
+.fp-volume-slider { flex:1; -webkit-appearance:none; appearance:none; height:4px; border-radius:99px; background:rgba(255,255,255,0.2); outline:none; touch-action:none; }
 .fp-volume-slider::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.5); }
 .fp-queue-pills { display:flex; gap:8px; margin-bottom:18px; }
 .fp-pill { flex:1; height:38px; border:none; border-radius:99px; background:rgba(255,255,255,0.1); color:#fff; display:flex; align-items:center; justify-content:center; }
@@ -553,9 +553,22 @@ const audio = document.getElementById('audio-el');
 
 // فتح قفل الصوت (iOS Safari) من أول لمسة بالتطبيق، عشان play() تشتغل حتى بعد تحميل طويل لاحقاً
 let audioUnlocked = false;
+let audioCtx = null, gainNode = null;
 function unlockAudio() {
   if(audioUnlocked) return;
   audioUnlocked = true;
+
+  // تفعيل Web Audio API عشان نتحكم بالصوت فعلياً (audio.volume العادي محجوب على iOS Safari)
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaElementSource(audio);
+    gainNode = audioCtx.createGain();
+    gainNode.gain.value = 1;
+    source.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+  } catch(e) { console.error('WebAudio setup failed:', e); }
+
   const silence = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQxAADB8AhSmxhIIEVCSiJrDCQBTcU3pkZAQVYAA';
   const originalSrc = audio.src;
   audio.src = silence;
@@ -1033,10 +1046,14 @@ function closeFullPlayer() {
 })();
 
 // قائمة الانتظار (Queue)
-// شريط التحكم بالصوت
+// شريط التحكم بالصوت (مربوط بـ Web Audio GainNode، يشتغل فعلياً على iOS)
 const volSlider = document.getElementById('fp-volume');
 if(volSlider) {
-  volSlider.addEventListener('input', (e)=>{ audio.volume = parseFloat(e.target.value); });
+  volSlider.addEventListener('input', (e)=>{
+    const v = parseFloat(e.target.value);
+    if(gainNode) gainNode.gain.value = v;
+    else audio.volume = v; // احتياط لو Web Audio ما نجح (متصفح غير آيفون مثلاً)
+  });
 }
 
 // Shuffle / Repeat
