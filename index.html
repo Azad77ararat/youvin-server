@@ -121,10 +121,6 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .fp-bottom-icons { display:flex; justify-content:flex-end; padding:18px 4px 0; }
 .fp-icon-btn { background:none; border:none; color:rgba(255,255,255,0.75); width:40px; height:40px; display:flex; align-items:center; justify-content:center; }
 .fp-icon-btn svg { width:22px; height:22px; fill:currentColor; }
-.fp-volume-row { display:flex; align-items:center; gap:10px; padding:18px 2px 0; }
-.fp-vol-icon { width:16px; height:16px; fill:rgba(255,255,255,0.5); flex-shrink:0; }
-.fp-volume-slider { flex:1; -webkit-appearance:none; appearance:none; height:4px; border-radius:99px; background:rgba(255,255,255,0.2); outline:none; touch-action:none; }
-.fp-volume-slider::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.5); }
 .fp-queue-pills { display:flex; gap:8px; margin-bottom:18px; }
 .fp-pill { flex:1; height:38px; border:none; border-radius:99px; background:rgba(255,255,255,0.1); color:#fff; display:flex; align-items:center; justify-content:center; }
 .fp-pill svg { width:18px; height:18px; fill:currentColor; }
@@ -422,11 +418,6 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
       <button class="fp-play-btn" id="fp-play-btn" onclick="togglePlay()"><svg viewBox="0 0 24 24" id="fp-play-icon"><path d="M8 5v14l11-7z"/></svg></button>
       <button class="fp-btn" onclick="nextSong()"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
     </div>
-    <div class="fp-volume-row">
-      <svg viewBox="0 0 24 24" class="fp-vol-icon"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg>
-      <input type="range" id="fp-volume" class="fp-volume-slider" min="0" max="1" step="0.01" value="1">
-      <svg viewBox="0 0 24 24" class="fp-vol-icon"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-    </div>
     <div class="fp-bottom-icons">
       <button class="fp-icon-btn" onclick="toggleQueue()">
         <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
@@ -553,22 +544,9 @@ const audio = document.getElementById('audio-el');
 
 // فتح قفل الصوت (iOS Safari) من أول لمسة بالتطبيق، عشان play() تشتغل حتى بعد تحميل طويل لاحقاً
 let audioUnlocked = false;
-let audioCtx = null, gainNode = null;
 function unlockAudio() {
   if(audioUnlocked) return;
   audioUnlocked = true;
-
-  // تفعيل Web Audio API عشان نتحكم بالصوت فعلياً (audio.volume العادي محجوب على iOS Safari)
-  try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const source = audioCtx.createMediaElementSource(audio);
-    gainNode = audioCtx.createGain();
-    gainNode.gain.value = 1;
-    source.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    if(audioCtx.state === 'suspended') audioCtx.resume();
-  } catch(e) { console.error('WebAudio setup failed:', e); }
-
   const silence = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQxAADB8AhSmxhIIEVCSiJrDCQBTcU3pkZAQVYAA';
   const originalSrc = audio.src;
   audio.src = silence;
@@ -606,10 +584,13 @@ window.onload = () => {
   audio.addEventListener('ended', onEnded);
   audio.addEventListener('loadedmetadata', onMetadata);
   audio.addEventListener('play', ()=>{
-    if(audioCtx && audioCtx.state !== 'running') audioCtx.resume();
+    if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
     isPlaying=true; updatePlayIcons(); refreshList();
   });
-  audio.addEventListener('pause', ()=>{ isPlaying=false; updatePlayIcons(); refreshList(); });
+  audio.addEventListener('pause', ()=>{
+    if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+    isPlaying=false; updatePlayIcons(); refreshList();
+  });
 
   setupProgressBar('mp-bar-wrap');
   setupProgressBar('fp-bar-wrap');
@@ -645,6 +626,7 @@ function playRadio(i) {
   document.getElementById('mini-player').classList.add('show');
   document.getElementById('fp-song-title').textContent=r.name;
   document.getElementById('fp-song-artist').textContent=r.genre;
+  updateMediaSession(r.name);
 }
 
 function toggleAuth() {
@@ -824,7 +806,7 @@ async function playSong(idx) {
       document.getElementById('mp-title').textContent = '💾 '+title;
       document.getElementById('fp-song-title').textContent=title;
       document.getElementById('fp-song-artist').textContent='YouVin';
-      if(audioCtx && audioCtx.state !== 'running') audioCtx.resume();
+      updateMediaSession(title);
       await audio.play();
       return;
     }
@@ -883,7 +865,7 @@ async function playSong(idx) {
     document.getElementById('mp-title').textContent=title;
     document.getElementById('fp-song-title').textContent=title;
     document.getElementById('fp-song-artist').textContent='YouVin';
-    if(audioCtx && audioCtx.state !== 'running') audioCtx.resume();
+    updateMediaSession(title);
     await audio.play();
   } catch(e) {
     console.error('Playback start error:', e);
@@ -891,8 +873,26 @@ async function playSong(idx) {
   }
 }
 
+// Media Session API — بيخلي iOS يعامل التطبيق كمشغّل موسيقى حقيقي:
+// يطلع اسم الأغنية وأزرار تحكم على شاشة القفل، وبيحسّن استمرار الصوت بالخلفية
+function updateMediaSession(title) {
+  if(!('mediaSession' in navigator)) return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: title,
+      artist: 'YouVin',
+      album: 'Issa❤️'
+    });
+  } catch(e) {}
+}
+if('mediaSession' in navigator) {
+  navigator.mediaSession.setActionHandler('play', ()=>audio.play());
+  navigator.mediaSession.setActionHandler('pause', ()=>audio.pause());
+  navigator.mediaSession.setActionHandler('previoustrack', ()=>prevSong());
+  navigator.mediaSession.setActionHandler('nexttrack', ()=>nextSong());
+}
+
 function togglePlay() {
-  if(audioCtx && audioCtx.state !== 'running') audioCtx.resume();
   if(audio.paused) audio.play(); else audio.pause();
 }
 
@@ -1052,15 +1052,6 @@ function closeFullPlayer() {
 })();
 
 // قائمة الانتظار (Queue)
-// شريط التحكم بالصوت (مربوط بـ Web Audio GainNode، يشتغل فعلياً على iOS)
-const volSlider = document.getElementById('fp-volume');
-if(volSlider) {
-  volSlider.addEventListener('input', (e)=>{
-    const v = parseFloat(e.target.value);
-    if(gainNode) gainNode.gain.value = v;
-    else audio.volume = v; // احتياط لو Web Audio ما نجح (متصفح غير آيفون مثلاً)
-  });
-}
 
 // Shuffle / Repeat
 let shuffleOn = false, repeatOn = false;
@@ -1118,21 +1109,30 @@ async function deleteSong(filename,idx) {
   } catch(e){ alert('Fehler beim Löschen'); }
 }
 
+async function fetchSongBlob(filename) {
+  const res = await fetch(`${SERVER}/play/${encodeURIComponent(filename)}`, {
+    headers: {'ngrok-skip-browser-warning': 'true'}
+  });
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  return await res.blob();
+}
+
+function saveBlobToFiles(blob, filename) {
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(blobUrl), 10000);
+}
+
 async function downloadToPhone(filename) {
   try {
-    const res = await fetch(`${SERVER}/play/${encodeURIComponent(filename)}`, {
-      headers: {'ngrok-skip-browser-warning': 'true'}
-    });
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const blob = await res.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(blobUrl), 10000);
+    const blob = await fetchSongBlob(filename);
+    saveCachedSong(filename, blob); // خزّنيها بالكاش الداخلي كمان أول ما نزلت
+    saveBlobToFiles(blob, filename);
   } catch(e) {
     alert('❌ Fehler beim Herunterladen: '+e.message);
   }
@@ -1172,7 +1172,15 @@ async function startDownload() {
     const res=await fetch(`${SERVER}/download`,{method:'POST',headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},body:JSON.stringify({url,format:fmt,quality})});
     const data=await res.json();
     if(res.ok&&data.success){
-      statusEl.textContent='✅ Erfolgreich heruntergeladen!'; statusEl.className='status-msg status-green';
+      statusEl.textContent='📦 Wird auf Gerät gespeichert...'; statusEl.className='status-msg status-blue';
+      try {
+        const blob = await fetchSongBlob(data.filename);
+        await saveCachedSong(data.filename, blob);
+        saveBlobToFiles(blob, data.filename);
+        statusEl.textContent='✅ Heruntergeladen & auf Gerät gespeichert!'; statusEl.className='status-msg status-green';
+      } catch(saveErr) {
+        statusEl.textContent='✅ Heruntergeladen (Gerätespeicherung fehlgeschlagen)'; statusEl.className='status-msg status-green';
+      }
       document.getElementById('dl-url').value='';
       await loadLibrary();
     } else {
