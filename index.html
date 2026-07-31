@@ -886,14 +886,39 @@ function updateMediaSession(title) {
   } catch(e) {}
 }
 if('mediaSession' in navigator) {
-  navigator.mediaSession.setActionHandler('play', ()=>audio.play());
+  navigator.mediaSession.setActionHandler('play', ()=>{
+    resumePlaybackReliably();
+  });
   navigator.mediaSession.setActionHandler('pause', ()=>audio.pause());
   navigator.mediaSession.setActionHandler('previoustrack', ()=>prevSong());
   navigator.mediaSession.setActionHandler('nexttrack', ()=>nextSong());
 }
 
+// استئناف موثوق: بيعيد بناء مصدر الصوت من الكاش عشان يجبر iOS يفعّل قناة الصوت الحقيقية
+// (لأنه أحياناً audio.play() لحاله بيخلي الوقت يمشي بدون صوت فعلي بعد رجوع من الخلفية)
+async function resumePlaybackReliably() {
+  const savedTime = audio.currentTime;
+  if(!isRadio && currentIdx>=0 && allSongs[currentIdx]) {
+    try {
+      const song = allSongs[currentIdx];
+      const cached = await getCachedSong(song.filename);
+      if(cached) {
+        if(currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+        currentBlobUrl = URL.createObjectURL(cached);
+        audio.src = currentBlobUrl;
+        audio.currentTime = savedTime;
+      }
+    } catch(e) {}
+  }
+  audio.play().catch(()=>{});
+}
+
 function togglePlay() {
-  if(audio.paused) audio.play(); else audio.pause();
+  if(audio.paused) {
+    resumePlaybackReliably();
+  } else {
+    audio.pause();
+  }
 }
 
 function prevSong() {
