@@ -721,6 +721,7 @@ async function loadLibrary() {
     if(allSongs.length===0){ empty.style.display='block'; list.innerHTML=''; }
     else { empty.style.display='none'; renderSongs(allSongs,list); }
     renderHome();
+    autoSyncAllSongs(); // نزّلي كل الأغاني تلقائياً بالخلفية بدون أي ضغط من المستخدم
   } catch(e) {
     loading.style.display='none';
     if(!cached) {
@@ -729,6 +730,40 @@ async function loadLibrary() {
       // عرض رسالة صغيرة أن السيرفر غير متصل
       document.getElementById('lib-count').textContent=allSongs.length+' Songs (offline)';
     }
+  }
+}
+
+// تنزيل كل أغاني المكتبة تلقائياً بالخلفية بدون أي ضغط من المستخدم
+let autoSyncRunning = false;
+async function autoSyncAllSongs() {
+  if(autoSyncRunning) return;
+  autoSyncRunning = true;
+  try {
+    const toSync = [];
+    for(const song of allSongs) {
+      const cached = await getCachedSong(song.filename);
+      if(!cached) toSync.push(song);
+    }
+    if(toSync.length === 0) { autoSyncRunning = false; return; }
+
+    const countEl = document.getElementById('lib-count');
+    const originalText = countEl.textContent;
+    for(let i=0; i<toSync.length; i++) {
+      const song = toSync[i];
+      countEl.textContent = `📥 ${i+1}/${toSync.length} wird synchronisiert...`;
+      try {
+        const res = await fetch(`${SERVER}/play/${encodeURIComponent(song.filename)}`, {
+          headers: {'ngrok-skip-browser-warning': 'true'}
+        });
+        if(res.ok) {
+          const blob = await res.blob();
+          await saveCachedSong(song.filename, blob);
+        }
+      } catch(e) { /* لو انقطع النت، بنكمل لاحقاً */ break; }
+    }
+    countEl.textContent = allSongs.length+' Songs';
+  } finally {
+    autoSyncRunning = false;
   }
 }
 
