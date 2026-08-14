@@ -1,4 +1,4 @@
-# YouVin Home Server v2 - Windows
+# YouVin Home Server v3 - Windows
 # -*- coding: utf-8 -*-
 import os
 import re
@@ -26,18 +26,38 @@ if os.path.exists(COOKIES_FILE):
 def clean_filename(name):
     return re.sub(r'[\\/*?:"<>|]', '_', name)
 
+# ═══════════════════════════════════
+# عزل كل جهاز/مستخدم بمجلده الخاص
+# ═══════════════════════════════════
+DEVICE_ID_RE = re.compile(r'^[a-zA-Z0-9_-]{8,64}$')
+
+def get_device_dir():
+    """كل طلب لازم يجيب X-Device-Id بالـ header. كل جهاز إله مجلد منفصل تماماً."""
+    device_id = request.headers.get('X-Device-Id', '').strip()
+    if not device_id or not DEVICE_ID_RE.match(device_id):
+        return None
+    user_dir = os.path.join(DOWNLOAD_DIR, device_id)
+    os.makedirs(user_dir, exist_ok=True)
+    return user_dir
+
+def device_error():
+    return jsonify({'error': 'Missing or invalid X-Device-Id header'}), 400
+
 @app.route('/ping', methods=['GET'])
 def ping():
-    return jsonify({'status': 'YouVin Home Server v2', 'ffmpeg': HAS_FFMPEG})
+    return jsonify({'status': 'YouVin Home Server v3', 'ffmpeg': HAS_FFMPEG})
 
 @app.route('/library', methods=['GET'])
 def library():
+    user_dir = get_device_dir()
+    if user_dir is None:
+        return device_error()
     songs = []
     try:
-        for f in sorted(os.listdir(DOWNLOAD_DIR)):
+        for f in sorted(os.listdir(user_dir)):
             ext = os.path.splitext(f)[1].lower()
             if ext in AUDIO_EXTS or ext in VIDEO_EXTS:
-                path = os.path.join(DOWNLOAD_DIR, f)
+                path = os.path.join(user_dir, f)
                 size = os.path.getsize(path)
                 name = os.path.splitext(f)[0]
                 songs.append({
@@ -53,8 +73,13 @@ def library():
 
 @app.route('/play/<path:filename>', methods=['GET'])
 def play(filename):
+    user_dir = get_device_dir()
+    if user_dir is None:
+        return device_error()
     try:
-        filepath = os.path.join(DOWNLOAD_DIR, filename)
+        # منع الخروج من مجلد المستخدم بمسارات مثل ../
+        safe_name = os.path.basename(filename)
+        filepath = os.path.join(user_dir, safe_name)
         if not os.path.exists(filepath):
             return jsonify({'error': 'File not found'}), 404
         return send_file(filepath, conditional=True)
@@ -63,8 +88,12 @@ def play(filename):
 
 @app.route('/delete/<path:filename>', methods=['DELETE'])
 def delete_song(filename):
+    user_dir = get_device_dir()
+    if user_dir is None:
+        return device_error()
     try:
-        filepath = os.path.join(DOWNLOAD_DIR, filename)
+        safe_name = os.path.basename(filename)
+        filepath = os.path.join(user_dir, safe_name)
         if not os.path.exists(filepath):
             return jsonify({'error': 'File not found'}), 404
         os.remove(filepath)
@@ -91,6 +120,9 @@ def info():
 
 @app.route('/download', methods=['POST'])
 def download():
+    user_dir = get_device_dir()
+    if user_dir is None:
+        return device_error()
     data = request.get_json()
     url = data.get('url')
     fmt = data.get('format', 'mp3')
@@ -99,7 +131,7 @@ def download():
         return jsonify({'error': 'No URL'}), 400
     try:
         opts = dict(BASE_OPTS)
-        opts['outtmpl'] = os.path.join(DOWNLOAD_DIR, '%(title)s.%(ext)s')
+        opts['outtmpl'] = os.path.join(user_dir, '%(title)s.%(ext)s')
         if fmt == 'mp4':
             opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
         elif HAS_FFMPEG:
@@ -119,7 +151,7 @@ def download():
 
         title = info_data.get('title', 'download')
         title_clean = clean_filename(title)
-        for f in os.listdir(DOWNLOAD_DIR):
+        for f in os.listdir(user_dir):
             ext = os.path.splitext(f)[1].lower()
             if ext in AUDIO_EXTS or ext in VIDEO_EXTS:
                 f_clean = clean_filename(os.path.splitext(f)[0])
@@ -132,7 +164,7 @@ def download():
 
 if __name__ == '__main__':
     print('=' * 44)
-    print('  YouVin Home Server v2')
+    print('  YouVin Home Server v3 (multi-device)')
     print('  http://localhost:5000')
     print('  Downloads:', DOWNLOAD_DIR)
     print('  ffmpeg:', 'OK' if HAS_FFMPEG else 'NICHT GEFUNDEN (nur M4A)')

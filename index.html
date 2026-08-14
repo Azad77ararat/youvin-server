@@ -272,6 +272,7 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
         <div>
           <div style="font-size:22px;font-weight:800;" id="lib-username">Issa ❤️</div>
           <div style="font-size:13px;color:#8E8E93;" id="lib-count">0 Songs</div>
+          <div style="font-size:10px;color:#48484A;margin-top:2px;" id="lib-device-id"></div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <div id="sub-badge-lib" class="sub-badge" style="background:#FF9F0A;" onclick="showTab('sub')">🆓 7T</div>
@@ -476,6 +477,21 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 const SERVER = 'https://fencing-purgatory-lifter.ngrok-free.dev';
 
 // ═══════════════════════════════════
+// هوية الجهاز — كل جهاز إله رقم فريد دائم، وكل واحد يشوف بس أغانيه هو
+// ═══════════════════════════════════
+function getDeviceId() {
+  let id = localStorage.getItem('youvin_device_id');
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
+    localStorage.setItem('youvin_device_id', id);
+  }
+  return id;
+}
+function deviceHeaders(extra) {
+  return Object.assign({'ngrok-skip-browser-warning': 'true', 'X-Device-Id': getDeviceId()}, extra || {});
+}
+
+// ═══════════════════════════════════
 // TEXZĪN DA'IM (IndexedDB) - تخزين الأغاني محلياً بشكل دائم
 // ═══════════════════════════════════
 let dbPromise = null;
@@ -572,6 +588,8 @@ const formats = [
 window.onload = () => {
   renderFormats();
   renderRadio();
+  const devIdEl = document.getElementById('lib-device-id');
+  if(devIdEl) devIdEl.textContent = 'ID: ' + getDeviceId();
   const saved = localStorage.getItem('youvin_user');
   if (saved) {
     const u = JSON.parse(saved);
@@ -712,7 +730,7 @@ async function loadLibrary() {
 
   // ثانياً: تحديث من السيرفر في الخلفية
   try {
-    const res=await fetch(`${SERVER}/library`,{signal:AbortSignal.timeout(5000),headers:{'ngrok-skip-browser-warning':'true'}});
+    const res=await fetch(`${SERVER}/library`,{signal:AbortSignal.timeout(5000),headers:deviceHeaders()});
     const data=await res.json();
     allSongs=data.songs||[];
     localStorage.setItem('youvin_songs', JSON.stringify(allSongs));
@@ -753,7 +771,7 @@ async function autoSyncAllSongs() {
       countEl.textContent = `📥 ${i+1}/${toSync.length} wird synchronisiert...`;
       try {
         const res = await fetch(`${SERVER}/play/${encodeURIComponent(song.filename)}`, {
-          headers: {'ngrok-skip-browser-warning': 'true'}
+          headers: deviceHeaders()
         });
         if(res.ok) {
           const blob = await res.blob();
@@ -854,7 +872,7 @@ async function playSong(idx) {
   let downloadedBlob = null;
   try {
     const res = await fetch(`${SERVER}/play/${encodeURIComponent(song.filename)}`, {
-      headers: {'ngrok-skip-browser-warning': 'true'}
+      headers: deviceHeaders()
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
 
@@ -1156,7 +1174,7 @@ async function deleteSong(filename,idx) {
   if(!confirm('Song löschen?')) return;
   if(idx===currentIdx) closePlayer();
   try {
-    await fetch(`${SERVER}/delete/${encodeURIComponent(filename)}`,{method:'DELETE',headers:{'ngrok-skip-browser-warning':'true'}});
+    await fetch(`${SERVER}/delete/${encodeURIComponent(filename)}`,{method:'DELETE',headers:deviceHeaders()});
     deleteCachedSong(filename);
     allSongs.splice(idx,1);
     localStorage.setItem('youvin_songs', JSON.stringify(allSongs));
@@ -1171,7 +1189,7 @@ async function deleteSong(filename,idx) {
 
 async function fetchSongBlob(filename) {
   const res = await fetch(`${SERVER}/play/${encodeURIComponent(filename)}`, {
-    headers: {'ngrok-skip-browser-warning': 'true'}
+    headers: deviceHeaders()
   });
   if(!res.ok) throw new Error('HTTP '+res.status);
   return await res.blob();
@@ -1229,7 +1247,7 @@ async function startDownload() {
   btn.textContent='⏳ Wird heruntergeladen...'; btn.disabled=true;
   statusEl.textContent='⏳ Verbinde mit Server...'; statusEl.className='status-msg status-blue';
   try {
-    const res=await fetch(`${SERVER}/download`,{method:'POST',headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},body:JSON.stringify({url,format:fmt,quality})});
+    const res=await fetch(`${SERVER}/download`,{method:'POST',headers:deviceHeaders({'Content-Type':'application/json'}),body:JSON.stringify({url,format:fmt,quality})});
     const data=await res.json();
     if(res.ok&&data.success){
       statusEl.textContent='📦 Wird auf Gerät gespeichert...'; statusEl.className='status-msg status-blue';
