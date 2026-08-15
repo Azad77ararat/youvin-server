@@ -618,12 +618,15 @@ function cycleVisualizerStyle() {
   window._vizBadgeTimeout = setTimeout(()=>vizBadge.classList.remove('show'), 1400);
 }
 
+let vizW = 0, vizH = 0;
+
 function drawVisualizer() {
   vizAnimId = requestAnimationFrame(drawVisualizer);
   if(!vizAnalyser || audio.paused) return;
   vizAnalyser.getByteFrequencyData(vizDataArray);
 
-  const w = vizCanvas.width, h = vizCanvas.height;
+  const w = vizW, h = vizH;
+  if(w === 0 || h === 0) return;
   const ctx2d = vizCanvas.getContext('2d');
   ctx2d.clearRect(0, 0, w, h);
 
@@ -633,11 +636,12 @@ function drawVisualizer() {
   grad.addColorStop(1, 'rgba(255,120,150,0.35)');
 
   if(style === 'Bars') {
-    const n = 40;
+    const n = 32;
     const barW = w / n;
     for(let i=0; i<n; i++) {
-      const v = vizDataArray[Math.floor(i * vizDataArray.length / n)] / 255;
-      const barH = Math.max(4, v * h * 0.85);
+      const raw = vizDataArray[Math.floor(i * vizDataArray.length / n)] / 255;
+      const v = Math.pow(raw, 0.55); // يبيّن الأصوات الهادية كمان، مو بس الباس القوي
+      const barH = Math.max(5, v * h * 0.85);
       ctx2d.fillStyle = grad;
       const x = i * barW + barW*0.15;
       const bw = barW*0.7;
@@ -704,10 +708,14 @@ function drawVisualizer() {
 
 function resizeVisualizerCanvas() {
   const rect = vizCanvas.getBoundingClientRect();
+  if(rect.width === 0 || rect.height === 0) return;
   const dpr = window.devicePixelRatio || 1;
+  vizW = rect.width;
+  vizH = rect.height;
   vizCanvas.width = rect.width * dpr;
   vizCanvas.height = rect.height * dpr;
-  vizCanvas.getContext('2d').scale(dpr, dpr);
+  // setTransform (مو scale) عشان ما يتراكم التكبير كل مرة تنعاد فيها هالدالة
+  vizCanvas.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
 function updateVisualizerVisibility() {
