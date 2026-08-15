@@ -720,10 +720,12 @@ audio.addEventListener('play', () => {
   setupVisualizerAudio();
   if(vizConnected) {
     if(vizCtx.state === 'suspended') vizCtx.resume();
+    updateVisualizerVisibility();
     resizeVisualizerCanvas();
     if(!vizAnimId) drawVisualizer();
+  } else {
+    updateVisualizerVisibility();
   }
-  updateVisualizerVisibility();
 });
 audio.addEventListener('pause', updateVisualizerVisibility);
 window.addEventListener('resize', () => { if(vizConnected) resizeVisualizerCanvas(); });
@@ -1247,6 +1249,9 @@ function setupProgressBar(id) {
 
 function openFullPlayer() {
   document.getElementById('full-player').classList.add('show');
+  if(vizConnected) {
+    setTimeout(() => { resizeVisualizerCanvas(); updateVisualizerVisibility(); }, 50);
+  }
 }
 function closeFullPlayer() {
   document.getElementById('full-player').classList.remove('show');
