@@ -479,7 +479,6 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 </div>
 
 <audio id="audio-el" preload="none"></audio>
-<audio id="audio-viz" preload="none" muted playsinline style="display:none;"></audio>
 
 <script>
 const SERVER = 'https://fencing-purgatory-lifter.ngrok-free.dev';
@@ -585,63 +584,24 @@ document.addEventListener('touchstart', unlockAudio, {once:true, passive:true});
 document.addEventListener('click', unlockAudio, {once:true});
 
 // ═══════════════════════════════════
-// مؤثرات بصرية — بتشتغل على عنصر صوت "خفي" منفصل (audio-viz)
-// عشان الصوت الحقيقي (audio-el) ما يتوصل بـ Web Audio API أبداً ويضل مستقر بالخلفية
+// مؤثرات بصرية شكلية آمنة — بدون Web Audio API إطلاقاً
+// ما بتتفاعل مع الصوت الحقيقي، بس ما ممكن تأثر عالصوت أو الخلفية أبداً
 // ═══════════════════════════════════
-const audioViz = document.getElementById('audio-viz');
-let vizCtx = null, vizAnalyser = null, vizDataArray = null, vizConnected = false;
 let vizStyleIdx = 0;
 const vizStyles = ['Bars', 'Wave', 'Circle'];
 let vizAnimId = null;
-let vizSyncInterval = null;
-let vizActive = false;
+let vizW = 0, vizH = 0;
+let vizStartTime = 0;
 const vizCanvas = document.getElementById('fp-visualizer');
 const vizBadge = document.getElementById('fp-viz-badge');
+let vizPhases = null;
 
-function setupVisualizerAudio() {
-  if(vizConnected) return;
-  try {
-    vizCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const source = vizCtx.createMediaElementSource(audioViz);
-    vizAnalyser = vizCtx.createAnalyser();
-    vizAnalyser.fftSize = 128;
-    vizAnalyser.smoothingTimeConstant = 0.82;
-    vizDataArray = new Uint8Array(vizAnalyser.frequencyBinCount);
-    source.connect(vizAnalyser);
-    vizAnalyser.connect(vizCtx.destination);
-    vizConnected = true;
-    if(vizCtx.state === 'suspended') vizCtx.resume();
-  } catch(e) { console.error('Visualizer setup failed:', e); }
-}
-
-// تشغّل نسخة صامتة مطابقة بالعنصر الخفي، بس وقت ما شاشة المشغل مفتوحة فعلياً
-function startVizMirror() {
-  if(isRadio || !audio.src || audio.paused) return;
-  vizActive = true;
-  setupVisualizerAudio();
-  if(vizCtx && vizCtx.state === 'suspended') vizCtx.resume();
-  if(audioViz.src !== audio.src) audioViz.src = audio.src;
-  audioViz.currentTime = audio.currentTime;
-  audioViz.play().catch(()=>{});
-  clearInterval(vizSyncInterval);
-  vizSyncInterval = setInterval(() => {
-    if(!vizActive) return;
-    if(Math.abs(audioViz.currentTime - audio.currentTime) > 0.3) {
-      audioViz.currentTime = audio.currentTime;
-    }
-    if(audio.paused && !audioViz.paused) audioViz.pause();
-    if(!audio.paused && audioViz.paused) audioViz.play().catch(()=>{});
-  }, 1000);
-}
-
-function stopVizMirror() {
-  vizActive = false;
-  clearInterval(vizSyncInterval);
-  audioViz.pause();
+function initVizPhases(n) {
+  vizPhases = [];
+  for(let i=0; i<n; i++) vizPhases.push(Math.random()*Math.PI*2);
 }
 
 function cycleVisualizerStyle() {
-  if(!vizConnected) return; // لسا ما انفتح الصوت (محتاج لمسة أولى بالتطبيق)
   vizStyleIdx = (vizStyleIdx + 1) % vizStyles.length;
   vizBadge.textContent = vizStyles[vizStyleIdx];
   vizBadge.classList.add('show');
@@ -649,15 +609,12 @@ function cycleVisualizerStyle() {
   window._vizBadgeTimeout = setTimeout(()=>vizBadge.classList.remove('show'), 1400);
 }
 
-let vizW = 0, vizH = 0;
-
-function drawVisualizer() {
+function drawVisualizer(ts) {
   vizAnimId = requestAnimationFrame(drawVisualizer);
-  if(!vizAnalyser || audio.paused) return;
-  vizAnalyser.getByteFrequencyData(vizDataArray);
-
+  if(audio.paused) return;
   const w = vizW, h = vizH;
   if(w === 0 || h === 0) return;
+  const t = (ts - vizStartTime) / 1000; // ثواني من بدء التشغيل
   const ctx2d = vizCanvas.getContext('2d');
   ctx2d.clearRect(0, 0, w, h);
 
@@ -668,11 +625,12 @@ function drawVisualizer() {
 
   if(style === 'Bars') {
     const n = 32;
+    if(!vizPhases || vizPhases.length !== n) initVizPhases(n);
     const barW = w / n;
     for(let i=0; i<n; i++) {
-      const raw = vizDataArray[Math.floor(i * vizDataArray.length / n)] / 255;
-      const v = Math.pow(raw, 0.55); // يبيّن الأصوات الهادية كمان، مو بس الباس القوي
-      const barH = Math.max(5, v * h * 0.85);
+      const v = 0.35 + 0.35*Math.sin(t*2.2 + vizPhases[i]) + 0.25*Math.sin(t*3.7 + i*0.5);
+      const vv = Math.max(0.06, Math.min(1, v));
+      const barH = vv * h * 0.85;
       ctx2d.fillStyle = grad;
       const x = i * barW + barW*0.15;
       const bw = barW*0.7;
@@ -689,15 +647,15 @@ function drawVisualizer() {
       ctx2d.fill();
     }
   } else if(style === 'Wave') {
+    const n = 64;
     ctx2d.beginPath();
     ctx2d.lineWidth = 3;
     ctx2d.strokeStyle = 'rgba(255,45,85,0.9)';
     const mid = h/2;
-    const n = vizDataArray.length;
     for(let i=0; i<n; i++) {
-      const v = (vizDataArray[i]/255) - 0.5;
       const x = (i/(n-1)) * w;
-      const y = mid + v * h * 0.7;
+      const v = Math.sin(i*0.35 + t*2.4) * 0.35 + Math.sin(i*0.12 + t*1.1) * 0.25;
+      const y = mid + v * h * 0.6;
       i===0 ? ctx2d.moveTo(x,y) : ctx2d.lineTo(x,y);
     }
     ctx2d.stroke();
@@ -705,21 +663,21 @@ function drawVisualizer() {
     ctx2d.lineWidth = 1.5;
     ctx2d.strokeStyle = 'rgba(255,150,170,0.5)';
     for(let i=0; i<n; i++) {
-      const v = (vizDataArray[i]/255) - 0.5;
       const x = (i/(n-1)) * w;
-      const y = mid - v * h * 0.7;
+      const v = Math.sin(i*0.35 + t*2.4 + Math.PI) * 0.35 + Math.sin(i*0.12 + t*1.1) * 0.25;
+      const y = mid + v * h * 0.6;
       i===0 ? ctx2d.moveTo(x,y) : ctx2d.lineTo(x,y);
     }
     ctx2d.stroke();
   } else if(style === 'Circle') {
     const cx = w/2, cy = h/2;
     const baseR = Math.min(w,h) * 0.22;
-    const n = vizDataArray.length;
+    const n = 48;
     ctx2d.beginPath();
     for(let i=0; i<=n; i++) {
-      const v = vizDataArray[i % n] / 255;
       const angle = (i / n) * Math.PI * 2;
-      const r = baseR + v * baseR * 1.6;
+      const v = 0.5 + 0.3*Math.sin(angle*3 + t*2) + 0.2*Math.sin(angle*5 - t*1.5);
+      const r = baseR + Math.max(0,v) * baseR * 1.6;
       const x = cx + Math.cos(angle) * r;
       const y = cy + Math.sin(angle) * r;
       i===0 ? ctx2d.moveTo(x,y) : ctx2d.lineTo(x,y);
@@ -745,37 +703,23 @@ function resizeVisualizerCanvas() {
   vizH = rect.height;
   vizCanvas.width = rect.width * dpr;
   vizCanvas.height = rect.height * dpr;
-  // setTransform (مو scale) عشان ما يتراكم التكبير كل مرة تنعاد فيها هالدالة
   vizCanvas.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
 function updateVisualizerVisibility() {
-  const shouldShow = vizConnected && !audio.paused && !isRadio;
+  const shouldShow = !audio.paused && !isRadio;
   vizCanvas.classList.toggle('active', shouldShow);
   document.getElementById('fp-placeholder').style.display = shouldShow ? 'none' : 'flex';
 }
 
 audio.addEventListener('play', () => {
   updateVisualizerVisibility();
-  const fullPlayerOpen = document.getElementById('full-player').classList.contains('show');
-  if(fullPlayerOpen) {
-    startVizMirror();
-    if(vizConnected) { resizeVisualizerCanvas(); if(!vizAnimId) drawVisualizer(); }
-  }
+  vizStartTime = performance.now();
+  resizeVisualizerCanvas();
+  if(!vizAnimId) vizAnimId = requestAnimationFrame(drawVisualizer);
 });
-audio.addEventListener('pause', () => { updateVisualizerVisibility(); stopVizMirror(); });
-window.addEventListener('resize', () => { if(vizConnected) resizeVisualizerCanvas(); });
-
-// خط دفاع إضافي: لو iOS أوقف قناة التحليل بالخلفية، رجّعيها لما يرجع التطبيق للواجهة
-document.addEventListener('visibilitychange', () => {
-  if(document.hidden) {
-    stopVizMirror(); // ما فيه داعي نشغّل عنصر خفي وشاشة المشغل مو ظاهرة أصلاً
-  } else {
-    if(vizCtx && vizCtx.state !== 'running') vizCtx.resume().catch(()=>{});
-    const fullPlayerOpen = document.getElementById('full-player').classList.contains('show');
-    if(fullPlayerOpen && !audio.paused) startVizMirror();
-  }
-});
+audio.addEventListener('pause', updateVisualizerVisibility);
+window.addEventListener('resize', () => resizeVisualizerCanvas());
 
 const formats = [
   {id:'mp3-320',label:'MP3 · 320 kbps'},
@@ -1290,14 +1234,12 @@ function setupProgressBar(id) {
 function openFullPlayer() {
   document.getElementById('full-player').classList.add('show');
   if(!isRadio && !audio.paused) {
-    startVizMirror();
-    setTimeout(() => { resizeVisualizerCanvas(); updateVisualizerVisibility(); if(vizConnected && !vizAnimId) drawVisualizer(); }, 50);
+    setTimeout(() => { resizeVisualizerCanvas(); updateVisualizerVisibility(); if(!vizAnimId) vizAnimId = requestAnimationFrame(drawVisualizer); }, 50);
   }
 }
 function closeFullPlayer() {
   document.getElementById('full-player').classList.remove('show');
   document.getElementById('fp-queue').classList.remove('show');
-  stopVizMirror();
 }
 
 // سحب لتحت بالإصبع لإغلاق المشغل الكامل (متل آبل ميوزك)
