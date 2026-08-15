@@ -605,6 +605,7 @@ function setupVisualizerAudio() {
     source.connect(vizAnalyser);
     vizAnalyser.connect(vizCtx.destination);
     vizConnected = true;
+    if(vizCtx.state === 'suspended') vizCtx.resume();
   } catch(e) { console.error('Visualizer setup failed:', e); }
 }
 
@@ -718,6 +719,7 @@ function updateVisualizerVisibility() {
 audio.addEventListener('play', () => {
   setupVisualizerAudio();
   if(vizConnected) {
+    if(vizCtx.state === 'suspended') vizCtx.resume();
     resizeVisualizerCanvas();
     if(!vizAnimId) drawVisualizer();
   }
