@@ -479,6 +479,7 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 </div>
 
 <audio id="audio-el" preload="none"></audio>
+<audio id="audio-viz" preload="none" muted playsinline style="display:none;"></audio>
 
 <script>
 const SERVER = 'https://fencing-purgatory-lifter.ngrok-free.dev';
@@ -584,12 +585,16 @@ document.addEventListener('touchstart', unlockAudio, {once:true, passive:true});
 document.addEventListener('click', unlockAudio, {once:true});
 
 // ═══════════════════════════════════
-// مؤثرات بصرية تتفاعل مع الصوت الحقيقي (Web Audio Analyser)
+// مؤثرات بصرية — بتشتغل على عنصر صوت "خفي" منفصل (audio-viz)
+// عشان الصوت الحقيقي (audio-el) ما يتوصل بـ Web Audio API أبداً ويضل مستقر بالخلفية
 // ═══════════════════════════════════
+const audioViz = document.getElementById('audio-viz');
 let vizCtx = null, vizAnalyser = null, vizDataArray = null, vizConnected = false;
 let vizStyleIdx = 0;
 const vizStyles = ['Bars', 'Wave', 'Circle'];
 let vizAnimId = null;
+let vizSyncInterval = null;
+let vizActive = false;
 const vizCanvas = document.getElementById('fp-visualizer');
 const vizBadge = document.getElementById('fp-viz-badge');
 
@@ -597,7 +602,7 @@ function setupVisualizerAudio() {
   if(vizConnected) return;
   try {
     vizCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const source = vizCtx.createMediaElementSource(audio);
+    const source = vizCtx.createMediaElementSource(audioViz);
     vizAnalyser = vizCtx.createAnalyser();
     vizAnalyser.fftSize = 128;
     vizAnalyser.smoothingTimeConstant = 0.82;
@@ -607,6 +612,32 @@ function setupVisualizerAudio() {
     vizConnected = true;
     if(vizCtx.state === 'suspended') vizCtx.resume();
   } catch(e) { console.error('Visualizer setup failed:', e); }
+}
+
+// تشغّل نسخة صامتة مطابقة بالعنصر الخفي، بس وقت ما شاشة المشغل مفتوحة فعلياً
+function startVizMirror() {
+  if(isRadio || !audio.src || audio.paused) return;
+  vizActive = true;
+  setupVisualizerAudio();
+  if(vizCtx && vizCtx.state === 'suspended') vizCtx.resume();
+  if(audioViz.src !== audio.src) audioViz.src = audio.src;
+  audioViz.currentTime = audio.currentTime;
+  audioViz.play().catch(()=>{});
+  clearInterval(vizSyncInterval);
+  vizSyncInterval = setInterval(() => {
+    if(!vizActive) return;
+    if(Math.abs(audioViz.currentTime - audio.currentTime) > 0.3) {
+      audioViz.currentTime = audio.currentTime;
+    }
+    if(audio.paused && !audioViz.paused) audioViz.pause();
+    if(!audio.paused && audioViz.paused) audioViz.play().catch(()=>{});
+  }, 1000);
+}
+
+function stopVizMirror() {
+  vizActive = false;
+  clearInterval(vizSyncInterval);
+  audioViz.pause();
 }
 
 function cycleVisualizerStyle() {
@@ -725,23 +756,24 @@ function updateVisualizerVisibility() {
 }
 
 audio.addEventListener('play', () => {
-  setupVisualizerAudio();
-  if(vizConnected) {
-    if(vizCtx.state === 'suspended') vizCtx.resume();
-    updateVisualizerVisibility();
-    resizeVisualizerCanvas();
-    if(!vizAnimId) drawVisualizer();
-  } else {
-    updateVisualizerVisibility();
+  updateVisualizerVisibility();
+  const fullPlayerOpen = document.getElementById('full-player').classList.contains('show');
+  if(fullPlayerOpen) {
+    startVizMirror();
+    if(vizConnected) { resizeVisualizerCanvas(); if(!vizAnimId) drawVisualizer(); }
   }
 });
-audio.addEventListener('pause', updateVisualizerVisibility);
+audio.addEventListener('pause', () => { updateVisualizerVisibility(); stopVizMirror(); });
 window.addEventListener('resize', () => { if(vizConnected) resizeVisualizerCanvas(); });
 
 // خط دفاع إضافي: لو iOS أوقف قناة التحليل بالخلفية، رجّعيها لما يرجع التطبيق للواجهة
 document.addEventListener('visibilitychange', () => {
-  if(!document.hidden && vizCtx && vizCtx.state !== 'running') {
-    vizCtx.resume().catch(()=>{});
+  if(document.hidden) {
+    stopVizMirror(); // ما فيه داعي نشغّل عنصر خفي وشاشة المشغل مو ظاهرة أصلاً
+  } else {
+    if(vizCtx && vizCtx.state !== 'running') vizCtx.resume().catch(()=>{});
+    const fullPlayerOpen = document.getElementById('full-player').classList.contains('show');
+    if(fullPlayerOpen && !audio.paused) startVizMirror();
   }
 });
 
@@ -1257,13 +1289,15 @@ function setupProgressBar(id) {
 
 function openFullPlayer() {
   document.getElementById('full-player').classList.add('show');
-  if(vizConnected) {
-    setTimeout(() => { resizeVisualizerCanvas(); updateVisualizerVisibility(); }, 50);
+  if(!isRadio && !audio.paused) {
+    startVizMirror();
+    setTimeout(() => { resizeVisualizerCanvas(); updateVisualizerVisibility(); if(vizConnected && !vizAnimId) drawVisualizer(); }, 50);
   }
 }
 function closeFullPlayer() {
   document.getElementById('full-player').classList.remove('show');
   document.getElementById('fp-queue').classList.remove('show');
+  stopVizMirror();
 }
 
 // سحب لتحت بالإصبع لإغلاق المشغل الكامل (متل آبل ميوزك)
