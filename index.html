@@ -69,7 +69,10 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .sub-badge { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; cursor:pointer; }
 
 /* SONG ITEMS */
-.song-item { background:#2C2C2E; border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:14px; margin-bottom:8px; cursor:pointer; transition:background 0.15s; -webkit-user-select:none; }
+.song-item { background:#2C2C2E; border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:14px; margin-bottom:8px; cursor:pointer; transition:background 0.15s; -webkit-user-select:none; touch-action:pan-y; }
+.song-item.dragging-row { background:#3A3A3C; box-shadow:0 8px 24px rgba(0,0,0,0.5); z-index:20; position:relative; opacity:0.95; transition:none; }
+.song-drag { flex-shrink:0; width:20px; height:20px; display:flex; align-items:center; justify-content:center; color:#8E8E93; touch-action:none; }
+.song-drag svg { width:18px; height:18px; fill:currentColor; }
 .song-item:active { background:#3A3A3C; }
 .song-item.playing { background:rgba(255,45,85,0.12); border:1px solid rgba(255,45,85,0.3); }
 .song-icon { width:46px; height:46px; background:#FF2D55; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -286,6 +289,10 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
           </button>
         </div>
       </div>
+      <div class="search-box" style="margin-bottom:16px;">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="text" id="lib-search-input" placeholder="Titel suchen..." oninput="filterLibrary()">
+      </div>
       <div id="lib-loading" style="text-align:center;padding:40px;color:#8E8E93;display:none;">⏳ Laden...</div>
       <div id="lib-empty" class="empty-state" style="display:none;">
         <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
@@ -312,17 +319,6 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
       </div>
       <div class="label">FORMAT</div>
       <div class="format-list" id="format-list"></div>
-    </div>
-
-    <!-- SEARCH -->
-    <div class="tab-pane" id="tab-search">
-      <div class="page-title">Suche</div>
-      <div class="search-box">
-        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-        <input type="text" id="search-input" placeholder="Titel suchen..." oninput="searchSongs()">
-      </div>
-      <div id="search-results"></div>
-      <div id="search-hint" style="text-align:center;padding:40px;color:#8E8E93;">Tippe um zu suchen</div>
     </div>
 
     <!-- SUB -->
@@ -357,7 +353,6 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
     <div class="nav-item" onclick="showTab('radio')" id="nav-radio"><svg viewBox="0 0 24 24"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12c0 1.1.89 2 2 2h16c1.11 0 2-.9 2-2V8c0-1.11-.89-2-2-2H7.3l8.26-3.34L14.83 1 3.24 6.15zM12 18c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-4c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg><span>Radio</span></div>
     <div class="nav-item" onclick="showTab('lib')" id="nav-lib"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg><span>Mediathek</span></div>
     <div class="nav-item" onclick="showTab('dl')" id="nav-dl"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg><span>Download</span></div>
-    <div class="nav-item" onclick="showTab('search')" id="nav-search"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><span>Suche</span></div>
   </nav>
 </div>
 
@@ -550,11 +545,15 @@ async function deleteCachedSong(filename) {
 
 const RADIOS = [
   {name:'1LIVE', genre:'Jugend · Pop', emoji:'🎤', url:'https://wdr-1live-live.icecastssl.wdr.de/wdr/1live/live/mp3/128/stream.mp3'},
-  {name:'WDR 2', genre:'Pop · Rock', emoji:'🎸', url:'https://wdr-wdr2-live.icecastssl.wdr.de/wdr/wdr2/live/mp3/128/stream.mp3'},
+  {name:'1LIVE diGGi', genre:'Electronic · Dance', emoji:'🎧', url:'https://wdr-1live-diggi.icecastssl.wdr.de/wdr/1live/diggi/mp3/128/stream.mp3'},
+  {name:'WDR 2', genre:'Pop · Rock', emoji:'🎸', url:'https://wdr-wdr2-rheinland.icecastssl.wdr.de/wdr/wdr2/rheinland/mp3/128/stream.mp3'},
+  {name:'WDR 3', genre:'Kultur · Klassik', emoji:'🎻', url:'https://wdr-wdr3-live.icecastssl.wdr.de/wdr/wdr3/live/mp3/128/stream.mp3'},
   {name:'WDR 4', genre:'Schlager · Oldies', emoji:'📻', url:'https://wdr-wdr4-live.icecastssl.wdr.de/wdr/wdr4/live/mp3/128/stream.mp3'},
-  {name:'YOU FM', genre:'Pop · Hits', emoji:'🔥', url:'https://hr-youfm-live.cast.addradio.de/hr/youfm/live/mp3/128/stream.mp3'},
-  {name:'N-JOY', genre:'Pop · Charts', emoji:'🎵', url:'https://ndr-njoy-live.cast.addradio.de/ndr/njoy/live/mp3/128/stream.mp3'},
+  {name:'WDR 5', genre:'Nachrichten · Talk', emoji:'📰', url:'https://wdr-wdr5-live.icecastssl.wdr.de/wdr/wdr5/live/mp3/128/stream.mp3'},
+  {name:'WDR Event', genre:'Charts · Party', emoji:'🎉', url:'https://wdr-event-live.icecastssl.wdr.de/wdr/event/live/mp3/128/stream.mp3'},
   {name:'Deutschlandfunk', genre:'Nachrichten · Talk', emoji:'🎙️', url:'https://st01.sslstream.dlf.de/dlf/01/128/mp3/stream.mp3'},
+  {name:'Deutschlandfunk Kultur', genre:'Kultur · Musik', emoji:'🎭', url:'https://st02.sslstream.dlf.de/dlf/02/128/mp3/stream.mp3'},
+  {name:'Deutschlandfunk Nova', genre:'Jugend · Wissen', emoji:'🧪', url:'https://st03.sslstream.dlf.de/dlf/03/128/mp3/stream.mp3'},
 ];
 
 let isRegister=false, currentUser=null, subType='free', trialDays=7;
@@ -914,7 +913,7 @@ function showTab(tab) {
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pane=document.getElementById('tab-'+tab);
   if(pane) pane.classList.add('active');
-  const navMap={home:'nav-home',radio:'nav-radio',lib:'nav-lib',dl:'nav-dl',search:'nav-search',sub:'nav-lib'};
+  const navMap={home:'nav-home',radio:'nav-radio',lib:'nav-lib',dl:'nav-dl',sub:'nav-lib'};
   if(navMap[tab]) document.getElementById(navMap[tab]).classList.add('active');
   if(tab==='lib') loadLibrary();
   window.scrollTo(0,0);
@@ -943,6 +942,7 @@ async function loadLibrary() {
     const res=await fetch(`${SERVER}/library`,{signal:AbortSignal.timeout(5000),headers:deviceHeaders()});
     const data=await res.json();
     allSongs=data.songs||[];
+    applyLibraryOrder();
     localStorage.setItem('youvin_songs', JSON.stringify(allSongs));
     loading.style.display='none';
     document.getElementById('lib-count').textContent=allSongs.length+' Songs';
@@ -1013,11 +1013,15 @@ function renderHome() {
 }
 
 function renderSongs(songs, container) {
+  const searching = !!document.getElementById('lib-search-input')?.value.trim();
   container.innerHTML=songs.map(song=>{
     const idx=allSongs.indexOf(song);
     const active=idx===currentIdx;
     const mb=( song.size/1024/1024).toFixed(1);
     return `<div class="song-item ${active?'playing':''}" id="si-${idx}" onclick="playSong(${idx})">
+      ${searching ? '' : `<div class="song-drag" ontouchstart="onHandleTouchStart(event, ${idx})" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+      </div>`}
       <div class="song-icon" style="${active?'background:rgba(255,45,85,0.2);':''}">
         ${active&&isPlaying
           ?'<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'
@@ -1038,10 +1042,99 @@ function renderSongs(songs, container) {
 }
 
 function refreshList() {
-  const list=document.getElementById('song-list');
-  if(allSongs.length>0) renderSongs(allSongs,list);
-  const sr=document.getElementById('search-results');
-  if(sr.children.length>0) searchSongs();
+  const searchInput = document.getElementById('lib-search-input');
+  if(searchInput && searchInput.value.trim()) {
+    filterLibrary();
+  } else {
+    const list=document.getElementById('song-list');
+    if(allSongs.length>0) renderSongs(allSongs,list);
+  }
+}
+
+// ═══════════════════════════════════
+// سحب وترتيب الأغاني يدوياً بالمكتبة
+// ═══════════════════════════════════
+let dragState = null;
+
+function onHandleTouchStart(e, idx) {
+  e.preventDefault();
+  e.stopPropagation();
+  const row = document.getElementById('si-'+idx);
+  const list = document.getElementById('song-list');
+  if(!row || !list) return;
+  const touch = e.touches[0];
+  dragState = { row, list, startY: touch.clientY };
+  row.classList.add('dragging-row');
+  document.addEventListener('touchmove', onHandleTouchMove, {passive:false});
+  document.addEventListener('touchend', onHandleTouchEnd);
+}
+
+function onHandleTouchMove(e) {
+  if(!dragState) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const deltaY = touch.clientY - dragState.startY;
+  dragState.row.style.transform = `translateY(${deltaY}px)`;
+
+  const siblings = Array.from(dragState.list.children).filter(el => el !== dragState.row);
+  const rowRect = dragState.row.getBoundingClientRect();
+  const rowMid = rowRect.top + rowRect.height/2;
+
+  for(const sib of siblings) {
+    const sibRect = sib.getBoundingClientRect();
+    const sibMid = sibRect.top + sibRect.height/2;
+    if(deltaY > 0 && rowMid > sibMid && dragState.row.nextElementSibling === sib) {
+      dragState.list.insertBefore(sib, dragState.row);
+      dragState.startY += sibRect.height;
+      dragState.row.style.transform = 'translateY(0px)';
+      break;
+    } else if(deltaY < 0 && rowMid < sibMid && dragState.row.previousElementSibling === sib) {
+      dragState.list.insertBefore(dragState.row, sib);
+      dragState.startY -= sibRect.height;
+      dragState.row.style.transform = 'translateY(0px)';
+      break;
+    }
+  }
+}
+
+function onHandleTouchEnd() {
+  if(!dragState) return;
+  const { row, list } = dragState;
+  row.classList.remove('dragging-row');
+  row.style.transform = '';
+  document.removeEventListener('touchmove', onHandleTouchMove);
+  document.removeEventListener('touchend', onHandleTouchEnd);
+
+  // اقرأي الترتيب الجديد من الـ DOM واحفظيه
+  const byFilename = {};
+  allSongs.forEach(s => byFilename[s.filename] = s);
+  const newOrder = Array.from(list.children).map(el => {
+    const idx = parseInt(el.id.replace('si-',''), 10);
+    return allSongs[idx];
+  }).filter(Boolean);
+  allSongs = newOrder;
+  saveLibraryOrder();
+  dragState = null;
+  refreshList(); // نعيد الرسم عشان onclick يتحدث بالمواقع الجديدة
+}
+
+function saveLibraryOrder() {
+  try {
+    localStorage.setItem('youvin_library_order', JSON.stringify(allSongs.map(s => s.filename)));
+  } catch(e) {}
+}
+
+function applyLibraryOrder() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('youvin_library_order') || '[]');
+    if(saved.length === 0) return;
+    const byFilename = {};
+    allSongs.forEach(s => byFilename[s.filename] = s);
+    const ordered = [];
+    saved.forEach(fn => { if(byFilename[fn]) { ordered.push(byFilename[fn]); delete byFilename[fn]; } });
+    Object.values(byFilename).forEach(s => ordered.push(s)); // أغاني جديدة تنضاف بالآخر
+    allSongs = ordered;
+  } catch(e) {}
 }
 
 async function playSong(idx) {
@@ -1429,17 +1522,18 @@ async function downloadToPhone(filename) {
   }
 }
 
-function searchSongs() {
-  const q=document.getElementById('search-input').value.trim().toLowerCase();
-  const results=document.getElementById('search-results');
-  const hint=document.getElementById('search-hint');
-  if(!q){ results.innerHTML=''; hint.style.display='block'; return; }
-  hint.style.display='none';
-  const found=allSongs.filter(s=>s.title.toLowerCase().includes(q));
-  if(found.length===0){
-    results.innerHTML='<div style="text-align:center;padding:40px;color:#8E8E93;">Keine Ergebnisse</div>';
+function filterLibrary() {
+  const q = document.getElementById('lib-search-input').value.trim().toLowerCase();
+  const list = document.getElementById('song-list');
+  const empty = document.getElementById('lib-empty');
+  const filtered = q ? allSongs.filter(s => s.title.toLowerCase().includes(q)) : allSongs;
+  if(filtered.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    empty.querySelector('p').textContent = q ? 'Keine Ergebnisse' : 'Keine Songs — lade Musik herunter!';
   } else {
-    renderSongs(found,results);
+    empty.style.display = 'none';
+    renderSongs(filtered, list);
   }
 }
 

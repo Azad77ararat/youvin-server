@@ -107,7 +107,9 @@ def info():
     if not url:
         return jsonify({'error': 'No URL'}), 400
     try:
-        with yt_dlp.YoutubeDL(dict(BASE_OPTS)) as ydl:
+        info_opts = dict(BASE_OPTS)
+        info_opts['noplaylist'] = True
+        with yt_dlp.YoutubeDL(info_opts) as ydl:
             data = ydl.extract_info(url, download=False)
             return jsonify({
                 'title': data.get('title', 'Unknown'),
@@ -131,6 +133,7 @@ def download():
         return jsonify({'error': 'No URL'}), 400
     try:
         opts = dict(BASE_OPTS)
+        opts['noplaylist'] = True  # يحمّل الأغنية المطلوبة بس، حتى لو الرابط من قائمة تشغيل أو Mix
         opts['outtmpl'] = os.path.join(user_dir, '%(title)s.%(ext)s')
         if fmt == 'mp4':
             opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
