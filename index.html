@@ -134,11 +134,15 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 .fp-down { width:36px; height:36px; background:rgba(255,255,255,0.1); border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; }
 .fp-down svg { width:20px; height:20px; fill:white; }
 .fp-title-small { font-size:14px; font-weight:700; color:rgba(255,255,255,0.7); }
-.fp-cover { width:100%; aspect-ratio:1; border-radius:20px; background:#2C2C2E; display:flex; align-items:center; justify-content:center; margin:16px 0 28px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+.fp-cover { width:100%; aspect-ratio:1; border-radius:20px; background:#2C2C2E; display:flex; align-items:center; justify-content:center; margin:16px 0 28px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.5); position:relative; }
 .fp-cover img { width:100%; height:100%; object-fit:cover; display:none; }
 .fp-cover img.loaded { display:block; }
 .fp-cover-placeholder { display:flex; align-items:center; justify-content:center; width:100%; height:100%; }
 .fp-cover-placeholder svg { width:80px; height:80px; fill:rgba(255,255,255,0.2); }
+.fp-visualizer { position:absolute; inset:0; width:100%; height:100%; display:none; }
+.fp-visualizer.active { display:block; }
+.fp-viz-badge { position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.45); backdrop-filter:blur(8px); color:rgba(255,255,255,0.85); font-size:11px; font-weight:600; padding:5px 11px; border-radius:99px; opacity:0; transition:opacity 0.3s; pointer-events:none; letter-spacing:0.3px; }
+.fp-viz-badge.show { opacity:1; }
 .fp-song-info { margin-bottom:24px; }
 .fp-song-title { font-size:22px; font-weight:800; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .fp-song-artist { font-size:15px; color:#8E8E93; }
@@ -396,11 +400,13 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
       <span class="fp-title-small">Wird abgespielt</span>
       <div style="width:36px;"></div>
     </div>
-    <div class="fp-cover" id="fp-cover">
+    <div class="fp-cover" id="fp-cover" onclick="cycleVisualizerStyle()">
       <div class="fp-cover-placeholder" id="fp-placeholder">
         <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
       </div>
       <img id="fp-cover-img" alt="">
+      <canvas id="fp-visualizer" class="fp-visualizer"></canvas>
+      <div class="fp-viz-badge" id="fp-viz-badge">Bars</div>
     </div>
     <div class="fp-song-info">
       <div class="fp-song-title" id="fp-song-title">—</div>
@@ -576,6 +582,156 @@ function unlockAudio() {
 }
 document.addEventListener('touchstart', unlockAudio, {once:true, passive:true});
 document.addEventListener('click', unlockAudio, {once:true});
+
+// ═══════════════════════════════════
+// مؤثرات بصرية تتفاعل مع الصوت الحقيقي (Web Audio Analyser)
+// ═══════════════════════════════════
+let vizCtx = null, vizAnalyser = null, vizDataArray = null, vizConnected = false;
+let vizStyleIdx = 0;
+const vizStyles = ['Bars', 'Wave', 'Circle'];
+let vizAnimId = null;
+const vizCanvas = document.getElementById('fp-visualizer');
+const vizBadge = document.getElementById('fp-viz-badge');
+
+function setupVisualizerAudio() {
+  if(vizConnected) return;
+  try {
+    vizCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = vizCtx.createMediaElementSource(audio);
+    vizAnalyser = vizCtx.createAnalyser();
+    vizAnalyser.fftSize = 128;
+    vizAnalyser.smoothingTimeConstant = 0.82;
+    vizDataArray = new Uint8Array(vizAnalyser.frequencyBinCount);
+    source.connect(vizAnalyser);
+    vizAnalyser.connect(vizCtx.destination);
+    vizConnected = true;
+  } catch(e) { console.error('Visualizer setup failed:', e); }
+}
+
+function cycleVisualizerStyle() {
+  if(!vizConnected) return; // لسا ما انفتح الصوت (محتاج لمسة أولى بالتطبيق)
+  vizStyleIdx = (vizStyleIdx + 1) % vizStyles.length;
+  vizBadge.textContent = vizStyles[vizStyleIdx];
+  vizBadge.classList.add('show');
+  clearTimeout(window._vizBadgeTimeout);
+  window._vizBadgeTimeout = setTimeout(()=>vizBadge.classList.remove('show'), 1400);
+}
+
+function drawVisualizer() {
+  vizAnimId = requestAnimationFrame(drawVisualizer);
+  if(!vizAnalyser || audio.paused) return;
+  vizAnalyser.getByteFrequencyData(vizDataArray);
+
+  const w = vizCanvas.width, h = vizCanvas.height;
+  const ctx2d = vizCanvas.getContext('2d');
+  ctx2d.clearRect(0, 0, w, h);
+
+  const style = vizStyles[vizStyleIdx];
+  const grad = ctx2d.createLinearGradient(0, h, 0, 0);
+  grad.addColorStop(0, 'rgba(255,45,85,0.95)');
+  grad.addColorStop(1, 'rgba(255,120,150,0.35)');
+
+  if(style === 'Bars') {
+    const n = 40;
+    const barW = w / n;
+    for(let i=0; i<n; i++) {
+      const v = vizDataArray[Math.floor(i * vizDataArray.length / n)] / 255;
+      const barH = Math.max(4, v * h * 0.85);
+      ctx2d.fillStyle = grad;
+      const x = i * barW + barW*0.15;
+      const bw = barW*0.7;
+      const y = h - barH;
+      const r = Math.min(bw/2, 4);
+      ctx2d.beginPath();
+      ctx2d.moveTo(x, h);
+      ctx2d.lineTo(x, y+r);
+      ctx2d.arcTo(x, y, x+r, y, r);
+      ctx2d.lineTo(x+bw-r, y);
+      ctx2d.arcTo(x+bw, y, x+bw, y+r, r);
+      ctx2d.lineTo(x+bw, h);
+      ctx2d.closePath();
+      ctx2d.fill();
+    }
+  } else if(style === 'Wave') {
+    ctx2d.beginPath();
+    ctx2d.lineWidth = 3;
+    ctx2d.strokeStyle = 'rgba(255,45,85,0.9)';
+    const mid = h/2;
+    const n = vizDataArray.length;
+    for(let i=0; i<n; i++) {
+      const v = (vizDataArray[i]/255) - 0.5;
+      const x = (i/(n-1)) * w;
+      const y = mid + v * h * 0.7;
+      i===0 ? ctx2d.moveTo(x,y) : ctx2d.lineTo(x,y);
+    }
+    ctx2d.stroke();
+    ctx2d.beginPath();
+    ctx2d.lineWidth = 1.5;
+    ctx2d.strokeStyle = 'rgba(255,150,170,0.5)';
+    for(let i=0; i<n; i++) {
+      const v = (vizDataArray[i]/255) - 0.5;
+      const x = (i/(n-1)) * w;
+      const y = mid - v * h * 0.7;
+      i===0 ? ctx2d.moveTo(x,y) : ctx2d.lineTo(x,y);
+    }
+    ctx2d.stroke();
+  } else if(style === 'Circle') {
+    const cx = w/2, cy = h/2;
+    const baseR = Math.min(w,h) * 0.22;
+    const n = vizDataArray.length;
+    ctx2d.beginPath();
+    for(let i=0; i<=n; i++) {
+      const v = vizDataArray[i % n] / 255;
+      const angle = (i / n) * Math.PI * 2;
+      const r = baseR + v * baseR * 1.6;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      i===0 ? ctx2d.moveTo(x,y) : ctx2d.lineTo(x,y);
+    }
+    ctx2d.closePath();
+    ctx2d.fillStyle = 'rgba(255,45,85,0.25)';
+    ctx2d.fill();
+    ctx2d.lineWidth = 2;
+    ctx2d.strokeStyle = 'rgba(255,45,85,0.9)';
+    ctx2d.stroke();
+    ctx2d.beginPath();
+    ctx2d.arc(cx, cy, baseR*0.55, 0, Math.PI*2);
+    ctx2d.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx2d.fill();
+  }
+}
+
+function resizeVisualizerCanvas() {
+  const rect = vizCanvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  vizCanvas.width = rect.width * dpr;
+  vizCanvas.height = rect.height * dpr;
+  vizCanvas.getContext('2d').scale(dpr, dpr);
+}
+
+function updateVisualizerVisibility() {
+  const shouldShow = vizConnected && !audio.paused && !isRadio;
+  vizCanvas.classList.toggle('active', shouldShow);
+  document.getElementById('fp-placeholder').style.display = shouldShow ? 'none' : 'flex';
+}
+
+audio.addEventListener('play', () => {
+  setupVisualizerAudio();
+  if(vizConnected) {
+    resizeVisualizerCanvas();
+    if(!vizAnimId) drawVisualizer();
+  }
+  updateVisualizerVisibility();
+});
+audio.addEventListener('pause', updateVisualizerVisibility);
+window.addEventListener('resize', () => { if(vizConnected) resizeVisualizerCanvas(); });
+
+// خط دفاع إضافي: لو iOS أوقف قناة التحليل بالخلفية، رجّعيها لما يرجع التطبيق للواجهة
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden && vizCtx && vizCtx.state !== 'running') {
+    vizCtx.resume().catch(()=>{});
+  }
+});
 
 const formats = [
   {id:'mp3-320',label:'MP3 · 320 kbps'},
