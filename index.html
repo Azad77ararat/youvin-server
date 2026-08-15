@@ -543,12 +543,12 @@ async function deleteCachedSong(filename) {
 }
 
 const RADIOS = [
-  {name:'YouVin Pop', genre:'Pop · Deutsch', emoji:'🎵', url:'https://streams.br.de/br-pop_2.m3u8'},
-  {name:'Rock Antenne', genre:'Rock · Classic', emoji:'🎸', url:'https://stream.rockantenne.de/rockantenne/stream/icecast'},
-  {name:'Türkiye Radyo', genre:'Türk Müziği', emoji:'🇹🇷', url:'https://радиотурция.com/stream'},
-  {name:'NRJ Germany', genre:'Pop · Hits', emoji:'🔥', url:'https://streams.nrj.fr/nrj-allemagne-128'},
-  {name:'Antenne Bayern', genre:'Bayern · Pop', emoji:'🍺', url:'https://stream.antenne.de/antenne'},
   {name:'1LIVE', genre:'Jugend · Pop', emoji:'🎤', url:'https://wdr-1live-live.icecastssl.wdr.de/wdr/1live/live/mp3/128/stream.mp3'},
+  {name:'WDR 2', genre:'Pop · Rock', emoji:'🎸', url:'https://wdr-wdr2-live.icecastssl.wdr.de/wdr/wdr2/live/mp3/128/stream.mp3'},
+  {name:'WDR 4', genre:'Schlager · Oldies', emoji:'📻', url:'https://wdr-wdr4-live.icecastssl.wdr.de/wdr/wdr4/live/mp3/128/stream.mp3'},
+  {name:'YOU FM', genre:'Pop · Hits', emoji:'🔥', url:'https://hr-youfm-live.cast.addradio.de/hr/youfm/live/mp3/128/stream.mp3'},
+  {name:'N-JOY', genre:'Pop · Charts', emoji:'🎵', url:'https://ndr-njoy-live.cast.addradio.de/ndr/njoy/live/mp3/128/stream.mp3'},
+  {name:'Deutschlandfunk', genre:'Nachrichten · Talk', emoji:'🎙️', url:'https://st01.sslstream.dlf.de/dlf/01/128/mp3/stream.mp3'},
 ];
 
 let isRegister=false, currentUser=null, subType='free', trialDays=7;
@@ -591,12 +591,19 @@ window.onload = () => {
   renderRadio();
   const devIdEl = document.getElementById('lib-device-id');
   if(devIdEl) devIdEl.textContent = 'ID: ' + getDeviceId();
+
+  // تخطّي شاشة الدخول نهائياً — كل جهاز بيدخل مباشرة بهويته الخاصة
   const saved = localStorage.getItem('youvin_user');
   if (saved) {
     const u = JSON.parse(saved);
     currentUser=u; subType=u.subType||'free'; trialDays=u.trialDays||7;
-    showApp();
+  } else {
+    currentUser={guest:true, subType:'free', trialDays:7};
+    subType='free'; trialDays=7;
+    localStorage.setItem('youvin_user', JSON.stringify(currentUser));
   }
+  showApp();
+
   setTimeout(()=>document.getElementById('splash').classList.add('hidden'),1800);
 
   audio.addEventListener('timeupdate', onTimeUpdate);
