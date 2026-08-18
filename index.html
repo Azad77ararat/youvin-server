@@ -928,6 +928,7 @@ async function loadLibrary() {
   const cached = localStorage.getItem('youvin_songs');
   if (cached) {
     allSongs = JSON.parse(cached);
+    applyLibraryOrder();
     loading.style.display='none';
     document.getElementById('lib-count').textContent=allSongs.length+' Songs (offline)';
     if(allSongs.length===0){ empty.style.display='block'; }
@@ -1114,6 +1115,7 @@ function onHandleTouchEnd() {
   }).filter(Boolean);
   allSongs = newOrder;
   saveLibraryOrder();
+  localStorage.setItem('youvin_songs', JSON.stringify(allSongs)); // حدّثي الكاش المعروض فوراً كمان
   dragState = null;
   refreshList(); // نعيد الرسم عشان onclick يتحدث بالمواقع الجديدة
 }

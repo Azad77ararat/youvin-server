@@ -3,6 +3,7 @@
 import os
 import re
 import shutil
+import urllib.request
 import yt_dlp
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
@@ -25,6 +26,19 @@ if os.path.exists(COOKIES_FILE):
 
 def clean_filename(name):
     return re.sub(r'[\\/*?:"<>|]', '_', name)
+
+def save_thumbnail(user_dir, audio_filename, thumbnail_url):
+    """يحمّل صورة غلاف الأغنية ويخزّنها بنفس اسم الملف الصوتي بس بامتداد .jpg"""
+    if not thumbnail_url:
+        return
+    try:
+        base_name = os.path.splitext(audio_filename)[0]
+        thumb_path = os.path.join(user_dir, base_name + '.jpg')
+        req = urllib.request.Request(thumbnail_url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=10) as resp, open(thumb_path, 'wb') as f:
+            f.write(resp.read())
+    except Exception:
+        pass  # ما نوقف التحميل لو فشلت الصورة بس
 
 # ═══════════════════════════════════
 # عزل كل جهاز/مستخدم بمجلده الخاص
@@ -60,12 +74,14 @@ def library():
                 path = os.path.join(user_dir, f)
                 size = os.path.getsize(path)
                 name = os.path.splitext(f)[0]
+                has_thumb = os.path.exists(os.path.join(user_dir, name + '.jpg'))
                 songs.append({
                     'filename': f,
                     'title': name,
                     'ext': ext.lstrip('.'),
                     'size': size,
                     'is_video': ext in VIDEO_EXTS,
+                    'has_thumb': has_thumb,
                 })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -86,6 +102,21 @@ def play(filename):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/thumb/<path:filename>', methods=['GET'])
+def thumb(filename):
+    user_dir = get_device_dir()
+    if user_dir is None:
+        return device_error()
+    try:
+        safe_name = os.path.basename(filename)
+        base_name = os.path.splitext(safe_name)[0]
+        thumb_path = os.path.join(user_dir, base_name + '.jpg')
+        if not os.path.exists(thumb_path):
+            return jsonify({'error': 'No thumbnail'}), 404
+        return send_file(thumb_path, mimetype='image/jpeg', conditional=True)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/delete/<path:filename>', methods=['DELETE'])
 def delete_song(filename):
     user_dir = get_device_dir()
@@ -97,6 +128,9 @@ def delete_song(filename):
         if not os.path.exists(filepath):
             return jsonify({'error': 'File not found'}), 404
         os.remove(filepath)
+        thumb_path = os.path.join(user_dir, os.path.splitext(safe_name)[0] + '.jpg')
+        if os.path.exists(thumb_path):
+            os.remove(thumb_path)
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -147,10 +181,14 @@ def download():
         with yt_dlp.YoutubeDL(opts) as ydl:
             info_data = ydl.extract_info(url, download=True)
 
+        thumb_url = info_data.get('thumbnail', '')
+
         if 'requested_downloads' in info_data and info_data['requested_downloads']:
             filepath = info_data['requested_downloads'][0].get('filepath')
             if filepath and os.path.exists(filepath):
-                return jsonify({'success': True, 'filename': os.path.basename(filepath), 'title': info_data.get('title', '')})
+                fname = os.path.basename(filepath)
+                save_thumbnail(user_dir, fname, thumb_url)
+                return jsonify({'success': True, 'filename': fname, 'title': info_data.get('title', '')})
 
         title = info_data.get('title', 'download')
         title_clean = clean_filename(title)
@@ -159,6 +197,7 @@ def download():
             if ext in AUDIO_EXTS or ext in VIDEO_EXTS:
                 f_clean = clean_filename(os.path.splitext(f)[0])
                 if title_clean[:15].lower() in f_clean.lower():
+                    save_thumbnail(user_dir, f, thumb_url)
                     return jsonify({'success': True, 'filename': f, 'title': title})
 
         return jsonify({'error': 'File not found after download'}), 500
