@@ -819,6 +819,15 @@ window.onload = () => {
     isPlaying=false; updatePlayIcons(); refreshList();
   });
 
+  // لاحظنا إنه iOS بيوقف فعلياً فك تشفير الصوت وهو الشاشة مقفلة/بالخلفية بالكامل،
+  // حتى لو الواجهة بتظهر "شغالة". لما الشاشة ترجع تبان (حتى بدون فتح التطبيق نفسه)
+  // نجبر إعادة بناء الصوت من الكاش عشان نضمن صوت فعلي، بدل ما ننتظر المستخدم يفتح التطبيق يدوياً.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && isPlaying) {
+      resumePlaybackReliably();
+    }
+  });
+
   setupProgressBar('mp-bar-wrap');
   setupProgressBar('fp-bar-wrap');
 };
