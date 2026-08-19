@@ -422,6 +422,37 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
       <div class="fp-song-title" id="fp-song-title">—</div>
       <div class="fp-song-artist" id="fp-song-artist">YouVin</div>
     </div>
+    <div id="fp-queue" class="fp-queue">
+      <div class="fp-queue-nowplaying">
+        <img class="fp-queue-np-thumb" id="fp-queue-np-thumb" alt="">
+        <div class="fp-queue-np-title" id="fp-queue-np-title">—</div>
+        <button class="fp-queue-np-icon-btn" id="fp-queue-fav-btn" onclick="toggleQueueFavorite()">
+          <svg viewBox="0 0 24 24" id="fp-queue-fav-icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        </button>
+        <button class="fp-queue-np-icon-btn">
+          <svg viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+        </button>
+      </div>
+      <div class="fp-queue-pills">
+        <button class="fp-pill" id="fp-shuffle-btn" onclick="toggleShuffle()">
+          <svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+        </button>
+        <button class="fp-pill" id="fp-repeat-btn" onclick="toggleRepeat()">
+          <svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+        </button>
+        <button class="fp-pill" disabled style="opacity:.4;">
+          <svg viewBox="0 0 24 24"><path d="M18.6 6.62c-1.44 0-2.8.56-3.77 1.53L12 10.66 10.48 12h.01L7.8 14.39c-.64.64-1.49.99-2.4.99-1.87 0-3.39-1.51-3.39-3.38S3.53 8.62 5.4 8.62c.91 0 1.76.35 2.44 1.03l1.13 1 1.51-1.34L9.22 8.2C8.2 7.18 6.84 6.62 5.4 6.62 2.42 6.62 0 9.04 0 12s2.42 5.38 5.4 5.38c1.44 0 2.8-.56 3.77-1.53l2.83-2.5.01.01 1.51-1.34-.01-.01 2.69-2.39c.64-.64 1.49-.99 2.4-.99 1.87 0 3.39 1.51 3.39 3.38s-1.52 3.38-3.39 3.38c-.9 0-1.76-.35-2.44-1.02l-1.14-1.01-1.51 1.34 1.27 1.14c1.02 1.01 2.37 1.57 3.82 1.57 2.98 0 5.4-2.41 5.4-5.38s-2.42-5.4-5.4-5.4z"/></svg>
+        </button>
+        <button class="fp-pill" onclick="toggleQueue()">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="fp-queue-toprow">
+        <div class="fp-queue-header">Warteliste</div>
+        <div class="fp-queue-clear" onclick="clearQueueView()">Entfernen</div>
+      </div>
+      <div class="fp-queue-list-wrap"><div id="fp-queue-list"></div></div>
+    </div>
     <div class="fp-progress">
       <div class="fp-bar-wrap" id="fp-bar-wrap">
         <div class="fp-bar-track">
@@ -447,37 +478,6 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
         <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
       </button>
     </div>
-  </div>
-  <div id="fp-queue" class="fp-queue">
-    <div class="fp-queue-nowplaying">
-      <img class="fp-queue-np-thumb" id="fp-queue-np-thumb" alt="">
-      <div class="fp-queue-np-title" id="fp-queue-np-title">—</div>
-      <button class="fp-queue-np-icon-btn" id="fp-queue-fav-btn" onclick="toggleQueueFavorite()">
-        <svg viewBox="0 0 24 24" id="fp-queue-fav-icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-      </button>
-      <button class="fp-queue-np-icon-btn">
-        <svg viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-      </button>
-    </div>
-    <div class="fp-queue-pills">
-      <button class="fp-pill" id="fp-shuffle-btn" onclick="toggleShuffle()">
-        <svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
-      </button>
-      <button class="fp-pill" id="fp-repeat-btn" onclick="toggleRepeat()">
-        <svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
-      </button>
-      <button class="fp-pill" disabled style="opacity:.4;">
-        <svg viewBox="0 0 24 24"><path d="M18.6 6.62c-1.44 0-2.8.56-3.77 1.53L12 10.66 10.48 12h.01L7.8 14.39c-.64.64-1.49.99-2.4.99-1.87 0-3.39-1.51-3.39-3.38S3.53 8.62 5.4 8.62c.91 0 1.76.35 2.44 1.03l1.13 1 1.51-1.34L9.22 8.2C8.2 7.18 6.84 6.62 5.4 6.62 2.42 6.62 0 9.04 0 12s2.42 5.38 5.4 5.38c1.44 0 2.8-.56 3.77-1.53l2.83-2.5.01.01 1.51-1.34-.01-.01 2.69-2.39c.64-.64 1.49-.99 2.4-.99 1.87 0 3.39 1.51 3.39 3.38s-1.52 3.38-3.39 3.38c-.9 0-1.76-.35-2.44-1.02l-1.14-1.01-1.51 1.34 1.27 1.14c1.02 1.01 2.37 1.57 3.82 1.57 2.98 0 5.4-2.41 5.4-5.38s-2.42-5.4-5.4-5.4z"/></svg>
-      </button>
-      <button class="fp-pill" onclick="toggleQueue()">
-        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-      </button>
-    </div>
-    <div class="fp-queue-toprow">
-      <div class="fp-queue-header">Warteliste</div>
-      <div class="fp-queue-clear" onclick="clearQueueView()">Entfernen</div>
-    </div>
-    <div class="fp-queue-list-wrap"><div id="fp-queue-list"></div></div>
   </div>
 </div>
 
