@@ -1264,11 +1264,21 @@ async function resumePlaybackReliably() {
         if(currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
         currentBlobUrl = URL.createObjectURL(cached);
         audio.src = currentBlobUrl;
+        // ننتظر تحميل البيانات الوصفية قبل ضبط الوقت -- iOS أحياناً بيتجاهل
+        // currentTime بصمت لو انضبط فوراً بعد تغيير src، خصوصاً بعد رجوع من الخلفية
+        await new Promise((resolve) => {
+          const onLoaded = () => { audio.removeEventListener('loadedmetadata', onLoaded); resolve(); };
+          audio.addEventListener('loadedmetadata', onLoaded);
+          setTimeout(resolve, 1200); // احتياط: نكمل حتى لو الحدث تأخر
+        });
         audio.currentTime = savedTime;
       }
     } catch(e) {}
   }
-  audio.play().catch(()=>{});
+  // محاولة تشغيل، ولو فشلت (شائع بعد توقف طويل بالخلفية على iOS) نعيد المحاولة مرة وحدة
+  audio.play().catch(() => {
+    setTimeout(() => { audio.play().catch(() => {}); }, 350);
+  });
 }
 
 function togglePlay() {
