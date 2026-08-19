@@ -1173,7 +1173,7 @@ async function playSong(idx) {
       document.getElementById('mp-title').textContent = '💾 '+title;
       document.getElementById('fp-song-title').textContent=title;
       document.getElementById('fp-song-artist').textContent='YouVin';
-      updateMediaSession(title);
+      updateMediaSession(title, song.filename);
       await audio.play();
       return;
     }
@@ -1232,7 +1232,7 @@ async function playSong(idx) {
     document.getElementById('mp-title').textContent=title;
     document.getElementById('fp-song-title').textContent=title;
     document.getElementById('fp-song-artist').textContent='YouVin';
-    updateMediaSession(title);
+    updateMediaSession(title, song.filename);
     await audio.play();
   } catch(e) {
     console.error('Playback start error:', e);
@@ -1242,14 +1242,20 @@ async function playSong(idx) {
 
 // Media Session API — بيخلي iOS يعامل التطبيق كمشغّل موسيقى حقيقي:
 // يطلع اسم الأغنية وأزرار تحكم على شاشة القفل، وبيحسّن استمرار الصوت بالخلفية
-function updateMediaSession(title) {
+function updateMediaSession(title, filename) {
   if(!('mediaSession' in navigator)) return;
   try {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: title,
-      artist: 'YouVin',
-      album: 'Issa❤️'
-    });
+    const meta = { title: title, artist: 'YouVin', album: 'Issa❤️' };
+    if (filename) {
+      const thumbUrl = `${SERVER}/thumb/${encodeURIComponent(filename)}`;
+      meta.artwork = [
+        { src: thumbUrl, sizes: '96x96',   type: 'image/jpeg' },
+        { src: thumbUrl, sizes: '128x128', type: 'image/jpeg' },
+        { src: thumbUrl, sizes: '256x256', type: 'image/jpeg' },
+        { src: thumbUrl, sizes: '512x512', type: 'image/jpeg' },
+      ];
+    }
+    navigator.mediaSession.metadata = new MediaMetadata(meta);
   } catch(e) {}
 }
 if('mediaSession' in navigator) {
