@@ -112,23 +112,38 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
 #full-player { display:none; position:fixed; inset:0; z-index:200; overflow:hidden; }
 #full-player.show { display:flex; flex-direction:column; }
 .fp-grabber { width:36px; height:5px; background:rgba(255,255,255,0.35); border-radius:99px; margin:10px auto 0; }
-.fp-queue { position:absolute; left:0; right:0; bottom:0; max-height:65%; background:rgba(20,20,22,0.98); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border-radius:20px 20px 0 0; transform:translateY(100%); transition:transform 0.3s ease; overflow-y:auto; padding:18px 16px 30px; z-index:20; box-shadow:0 -8px 30px rgba(0,0,0,0.4); }
-.fp-queue.show { transform:translateY(0); }
+.fp-queue { display:none; flex-direction:column; flex:1; min-height:0; margin:16px 0 20px; }
+#full-player.queue-open .fp-queue { display:flex; }
+#full-player.queue-open .fp-cover,
+#full-player.queue-open .fp-song-info { display:none; }
+.fp-queue-nowplaying { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+.fp-queue-np-thumb { width:44px; height:44px; border-radius:8px; background:#2C2C2E; flex-shrink:0; object-fit:cover; }
+.fp-queue-np-title { flex:1; min-width:0; font-size:15px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fp-queue-np-icon-btn { background:none; border:none; color:rgba(255,255,255,0.75); width:34px; height:34px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.fp-queue-np-icon-btn svg { width:20px; height:20px; fill:currentColor; }
+.fp-queue-np-icon-btn.active { color:#FF2D55; }
+.fp-queue-toprow { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
 .fp-queue-header { font-size:17px; font-weight:700; color:#fff; }
-.fp-queue-sub { font-size:13px; color:#c9a084; margin-bottom:14px; }
+.fp-queue-clear { font-size:14px; color:#c9a084; cursor:pointer; }
+.fp-queue-list-wrap { flex:1; min-height:0; overflow-y:auto; }
 .fp-queue-item { display:flex; align-items:center; gap:12px; padding:10px 2px; border-bottom:1px solid rgba(255,255,255,0.08); cursor:pointer; }
 .fp-queue-icon { width:36px; height:36px; border-radius:8px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
 .fp-queue-info { flex:1; min-width:0; }
 .fp-queue-title { font-size:14px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .fp-queue-artist { font-size:12px; color:#999; }
 .fp-queue-handle { color:#888; font-size:16px; padding:4px; }
-.fp-bottom-icons { display:flex; justify-content:flex-end; padding:18px 4px 0; }
+.fp-bottom-icons { display:flex; justify-content:space-between; align-items:center; padding:14px 4px 0; }
 .fp-icon-btn { background:none; border:none; color:rgba(255,255,255,0.75); width:40px; height:40px; display:flex; align-items:center; justify-content:center; }
 .fp-icon-btn svg { width:22px; height:22px; fill:currentColor; }
 .fp-queue-pills { display:flex; gap:8px; margin-bottom:18px; }
 .fp-pill { flex:1; height:38px; border:none; border-radius:99px; background:rgba(255,255,255,0.1); color:#fff; display:flex; align-items:center; justify-content:center; }
 .fp-pill svg { width:18px; height:18px; fill:currentColor; }
 .fp-pill.active { background:rgba(255,255,255,0.9); color:#3a2418; }
+.fp-volume { display:flex; align-items:center; gap:10px; margin-top:18px; }
+.fp-volume svg { width:16px; height:16px; fill:rgba(255,255,255,0.6); flex-shrink:0; }
+.fp-volume svg.loud { width:20px; height:20px; }
+.fp-volume input[type="range"] { flex:1; -webkit-appearance:none; appearance:none; height:5px; border-radius:99px; background:rgba(255,255,255,0.2); outline:none; }
+.fp-volume input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.5); }
 .fp-bg { position:absolute; inset:0; background:linear-gradient(180deg,#2C1810 0%,#1C1C1E 100%); }
 .fp-bg-img { position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(40px) brightness(0.4); opacity:0; transition:opacity 0.5s; }
 .fp-bg-img.loaded { opacity:1; }
@@ -421,13 +436,29 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
       <button class="fp-play-btn" id="fp-play-btn" onclick="togglePlay()"><svg viewBox="0 0 24 24" id="fp-play-icon"><path d="M8 5v14l11-7z"/></svg></button>
       <button class="fp-btn" onclick="nextSong()"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
     </div>
+    <div class="fp-volume">
+      <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg>
+      <input type="range" id="fp-volume-slider" min="0" max="1" step="0.01" value="1" oninput="setVolume(this.value)">
+      <svg class="loud" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+    </div>
     <div class="fp-bottom-icons">
+      <div style="width:40px;"></div>
       <button class="fp-icon-btn" onclick="toggleQueue()">
         <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
       </button>
     </div>
   </div>
   <div id="fp-queue" class="fp-queue">
+    <div class="fp-queue-nowplaying">
+      <img class="fp-queue-np-thumb" id="fp-queue-np-thumb" alt="">
+      <div class="fp-queue-np-title" id="fp-queue-np-title">—</div>
+      <button class="fp-queue-np-icon-btn" id="fp-queue-fav-btn" onclick="toggleQueueFavorite()">
+        <svg viewBox="0 0 24 24" id="fp-queue-fav-icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </button>
+      <button class="fp-queue-np-icon-btn">
+        <svg viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+      </button>
+    </div>
     <div class="fp-queue-pills">
       <button class="fp-pill" id="fp-shuffle-btn" onclick="toggleShuffle()">
         <svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
@@ -442,9 +473,11 @@ body { background:#1C1C1E; color:white; font-family:-apple-system,BlinkMacSystem
         <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
       </button>
     </div>
-    <div class="fp-queue-header">Wiedergabe fortsetzen</div>
-    <div class="fp-queue-sub">Von Issa❤️</div>
-    <div id="fp-queue-list"></div>
+    <div class="fp-queue-toprow">
+      <div class="fp-queue-header">Warteliste</div>
+      <div class="fp-queue-clear" onclick="clearQueueView()">Entfernen</div>
+    </div>
+    <div class="fp-queue-list-wrap"><div id="fp-queue-list"></div></div>
   </div>
 </div>
 
@@ -790,6 +823,14 @@ const formats = [
 window.onload = () => {
   renderFormats();
   renderRadio();
+  // استعادة مستوى الصوت المحفوظ (أو الحد الأقصى افتراضياً)
+  try {
+    const savedVol = parseFloat(localStorage.getItem('youvin_volume'));
+    const vol = isNaN(savedVol) ? 1 : savedVol;
+    audio.volume = vol;
+    const volSlider = document.getElementById('fp-volume-slider');
+    if(volSlider) volSlider.value = vol;
+  } catch(e) {}
   const devIdEl = document.getElementById('lib-device-id');
   if(devIdEl) devIdEl.textContent = 'ID: ' + getDeviceId();
 
@@ -1438,7 +1479,7 @@ function openFullPlayer() {
 }
 function closeFullPlayer() {
   document.getElementById('full-player').classList.remove('show');
-  document.getElementById('fp-queue').classList.remove('show');
+  document.getElementById('full-player').classList.remove('queue-open');
 }
 
 // سحب لتحت بالإصبع لإغلاق المشغل الكامل (متل آبل ميوزك)
@@ -1498,10 +1539,47 @@ function toggleRepeat() {
 }
 
 function toggleQueue() {
-  const q = document.getElementById('fp-queue');
-  if(q.classList.contains('show')) { q.classList.remove('show'); return; }
+  const fp = document.getElementById('full-player');
+  if(fp.classList.contains('queue-open')) { fp.classList.remove('queue-open'); return; }
   renderQueue();
-  q.classList.add('show');
+  updateQueueNowPlaying();
+  fp.classList.add('queue-open');
+}
+function updateQueueNowPlaying() {
+  const thumb = document.getElementById('fp-queue-np-thumb');
+  const coverImg = document.getElementById('fp-cover-img');
+  thumb.src = (coverImg && coverImg.classList.contains('loaded')) ? coverImg.src : '';
+  document.getElementById('fp-queue-np-title').textContent = playingTitle || '—';
+  const song = (!isRadio && currentIdx>=0) ? allSongs[currentIdx] : null;
+  const isFav = song && isSongFavorite(song.filename);
+  document.getElementById('fp-queue-fav-btn').classList.toggle('active', !!isFav);
+}
+function getFavorites() {
+  try { return JSON.parse(localStorage.getItem('youvin_favorites') || '[]'); } catch(e) { return []; }
+}
+function isSongFavorite(filename) {
+  return getFavorites().includes(filename);
+}
+function toggleQueueFavorite() {
+  if(isRadio || currentIdx<0) return;
+  const song = allSongs[currentIdx];
+  if(!song) return;
+  let favs = getFavorites();
+  if(favs.includes(song.filename)) {
+    favs = favs.filter(f => f !== song.filename);
+  } else {
+    favs.push(song.filename);
+  }
+  localStorage.setItem('youvin_favorites', JSON.stringify(favs));
+  document.getElementById('fp-queue-fav-btn').classList.toggle('active', favs.includes(song.filename));
+}
+function clearQueueView() {
+  document.getElementById('fp-queue-list').innerHTML = '<div style="opacity:.5;padding:20px 2px;text-align:center;">Warteliste ist leer</div>';
+}
+function setVolume(v) {
+  const vol = parseFloat(v);
+  audio.volume = vol;
+  try { localStorage.setItem('youvin_volume', vol); } catch(e) {}
 }
 function renderQueue() {
   const list = document.getElementById('fp-queue-list');
@@ -1516,7 +1594,7 @@ function renderQueue() {
   }
   list.innerHTML = upcoming.map((s,i)=>{
     const realIdx = currentIdx+1+i;
-    return `<div class="fp-queue-item" onclick="playSong(${realIdx});document.getElementById('fp-queue').classList.remove('show');">
+    return `<div class="fp-queue-item" onclick="playSong(${realIdx});document.getElementById('full-player').classList.remove('queue-open');">
       <div class="fp-queue-icon">♪</div>
       <div class="fp-queue-info"><div class="fp-queue-title">${s.title}</div></div>
       <div class="fp-queue-handle">☰</div>
