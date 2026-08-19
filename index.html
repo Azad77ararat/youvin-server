@@ -1259,6 +1259,13 @@ if('mediaSession' in navigator) {
   navigator.mediaSession.setActionHandler('pause', ()=>audio.pause());
   navigator.mediaSession.setActionHandler('previoustrack', ()=>prevSong());
   navigator.mediaSession.setActionHandler('nexttrack', ()=>nextSong());
+  // نلغي أزرار التقديم/التأخير (١٠ ثواني) صراحةً — iOS بيعرضها بالأولوية
+  // وبيخفي أزرار الأغنية السابقة/التالية، فلازم نوقفها عشان تظهر أزرار الأغاني
+  try {
+    navigator.mediaSession.setActionHandler('seekbackward', null);
+    navigator.mediaSession.setActionHandler('seekforward', null);
+    navigator.mediaSession.setActionHandler('seekto', null);
+  } catch(e) {}
 }
 
 // خطوة أولى وحاسمة: ننادي play() فوراً وبشكل متزامن (بدون أي await قبلها).
