@@ -1245,15 +1245,29 @@ function updateMediaSession(title) {
 }
 if('mediaSession' in navigator) {
   navigator.mediaSession.setActionHandler('play', ()=>{
-    resumePlaybackReliably();
+    quickResumeOrRebuild();
   });
   navigator.mediaSession.setActionHandler('pause', ()=>audio.pause());
   navigator.mediaSession.setActionHandler('previoustrack', ()=>prevSong());
   navigator.mediaSession.setActionHandler('nexttrack', ()=>nextSong());
 }
 
-// استئناف موثوق: بيعيد بناء مصدر الصوت من الكاش عشان يجبر iOS يفعّل قناة الصوت الحقيقية
-// (لأنه أحياناً audio.play() لحاله بيخلي الوقت يمشي بدون صوت فعلي بعد رجوع من الخلفية)
+// خطوة أولى وحاسمة: ننادي play() فوراً وبشكل متزامن (بدون أي await قبلها).
+// iOS بيربط إذن التشغيل بلحظة الضغطة على زر شاشة القفل نفسها -- أي تأخير
+// (حتى لو بسيط بسبب await لجلب من IndexedDB) بيخلي iOS يرفض التشغيل بصمت.
+// لو نجحت هاي المحاولة السريعة (الحالة الشائعة)، خلصنا. لو فشلت، نازل
+// لإعادة بناء المصدر من الكاش كحل احتياطي أخير.
+function quickResumeOrRebuild() {
+  const p = audio.play();
+  if (p && typeof p.catch === 'function') {
+    p.catch(() => {
+      resumePlaybackReliably();
+    });
+  }
+}
+
+// استئناف موثوق (حل احتياطي): بيعيد بناء مصدر الصوت من الكاش عشان يجبر iOS
+// يفعّل قناة الصوت الحقيقية من جديد. يُستخدم فقط لما المحاولة المتزامنة تفشل.
 async function resumePlaybackReliably() {
   const savedTime = audio.currentTime;
   if(!isRadio && currentIdx>=0 && allSongs[currentIdx]) {
@@ -1283,7 +1297,7 @@ async function resumePlaybackReliably() {
 
 function togglePlay() {
   if(audio.paused) {
-    resumePlaybackReliably();
+    quickResumeOrRebuild();
   } else {
     audio.pause();
   }
