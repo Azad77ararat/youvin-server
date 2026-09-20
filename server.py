@@ -20,7 +20,17 @@ HAS_FFMPEG = shutil.which('ffmpeg') is not None
 AUDIO_EXTS = ('.mp3', '.m4a', '.flac', '.opus', '.webm', '.wav', '.aac')
 VIDEO_EXTS = ('.mp4', '.mkv')
 
-BASE_OPTS = {'quiet': True, 'no_warnings': True}
+BASE_OPTS = {
+    'quiet': True,
+    'no_warnings': True,
+    'extractor_args': {
+        'youtube': {
+            # نجرب أكثر من "عميل" (client) عشان نضمن توفر أكبر عدد ممكن
+            # من صيغ الصوت/الفيديو ونتجاوز مشاكل التحقق المؤقتة من يوتيوب
+            'player_client': ['ios', 'android', 'web'],
+        }
+    },
+}
 if os.path.exists(COOKIES_FILE):
     BASE_OPTS['cookiefile'] = COOKIES_FILE
 
@@ -93,7 +103,6 @@ def play(filename):
     if user_dir is None:
         return device_error()
     try:
-        # منع الخروج من مجلد المستخدم بمسارات مثل ../
         safe_name = os.path.basename(filename)
         filepath = os.path.join(user_dir, safe_name)
         if not os.path.exists(filepath):
@@ -170,7 +179,7 @@ def download():
         opts['noplaylist'] = True  # يحمّل الأغنية المطلوبة بس، حتى لو الرابط من قائمة تشغيل أو Mix
         opts['outtmpl'] = os.path.join(user_dir, '%(title)s.%(ext)s')
         if fmt == 'mp4':
-            opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
+            opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/bestvideo+bestaudio/best'
         elif HAS_FFMPEG:
             codec = 'flac' if fmt == 'flac' else 'aac' if fmt == 'm4a' else 'mp3'
             opts['format'] = 'bestaudio/best'
