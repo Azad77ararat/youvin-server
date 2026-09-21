@@ -449,12 +449,8 @@ const formats = [
 window.onload = () => {
   renderFormats();
   renderRadio();
-  const saved = localStorage.getItem('youvin_user');
-  if (saved) {
-    const u = JSON.parse(saved);
-    currentUser=u; subType=u.subType||'free'; trialDays=u.trialDays||7;
-    showApp();
-  }
+  currentUser={email:'issa@youvin.app',subType:'admin'}; subType='admin';
+  showApp();
   setTimeout(()=>document.getElementById('splash').classList.add('hidden'),1800);
 
   audio.addEventListener('timeupdate', onTimeUpdate);
