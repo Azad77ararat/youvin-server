@@ -806,14 +806,20 @@ async function startDownload() {
     const res=await fetch(`${SERVER}/download`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,format:fmt,quality})});
     const data=await res.json();
     if(res.ok&&data.success){
-      statusEl.textContent='✅ Erfolgreich heruntergeladen!'; statusEl.className='status-msg status-green';
+      statusEl.textContent='✅ Erfolgreich heruntergeladen: '+data.title; statusEl.className='status-msg status-green';
       document.getElementById('dl-url').value='';
       await loadLibrary();
     } else {
-      statusEl.textContent='❌ '+(data.error||'Fehler'); statusEl.className='status-msg status-red';
+      const errMsg = data.error||'Fehler';
+      if(errMsg.includes('403')||errMsg.includes('Forbidden')||errMsg.includes('bot')){
+        statusEl.innerHTML='❌ YouTube blockiert den Download.<br><span style="font-size:13px;color:#8E8E93;">Versuche einen SoundCloud-Link: soundcloud.com</span>';
+      } else {
+        statusEl.textContent='❌ '+errMsg;
+      }
+      statusEl.className='status-msg status-red';
     }
   } catch(e){
-    statusEl.textContent='❌ Server nicht erreichbar'; statusEl.className='status-msg status-red';
+    statusEl.textContent='❌ Server nicht erreichbar — stelle sicher dass der Server läuft'; statusEl.className='status-msg status-red';
   }
   btn.textContent='⬇ Herunterladen'; btn.disabled=false;
 }
