@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: youvin-server
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server_cloud:app --bind 0.0.0.0:$PORT --workers 2 --timeout 300
+    envVars:
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY
+        sync: false
+      - key: R2_SECRET_KEY
+        sync: false
+      - key: R2_BUCKET
+        value: youvin-music
+      - key: YOUVIN_API_KEY
+        sync: false
