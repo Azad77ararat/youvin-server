@@ -1,3 +1,4 @@
+const SERVER = 'https://youvin-server.onrender.com';
 # YouVin Home Server - Windows
 # -*- coding: utf-8 -*-
 import os

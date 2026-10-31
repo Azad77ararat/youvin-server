@@ -30,6 +30,9 @@ s3 = boto3.client(
     region_name='auto'
 )
 
+# ── حدود التخزين ─────────────────────────────────────────────────────────────
+FREE_LIMIT_B = 100 * 1024 * 1024   # 100 MB
+
 # ── حالة التحميل ──────────────────────────────────────────────────────────────
 active_jobs: dict = {}
 
@@ -59,6 +62,33 @@ def save_library(user_id: str, songs: list):
     s3.put_object(Bucket=R2_BUCKET, Key=meta_key(user_id),
                   Body=data, ContentType='application/json')
 
+def get_used_bytes(user_id: str) -> int:
+    """حساب المساحة المستخدمة من library.json"""
+    lib = load_library(user_id)
+    return sum(s.get('size', 0) for s in lib)
+
+def is_premium(sub_type: str) -> bool:
+    """هل المستخدم premium؟"""
+    return sub_type in ('yearly', 'lifetime', 'admin')
+
+def check_storage(user_id: str, sub_type: str, extra_bytes: int = 0):
+    """
+    يرجع (True, None) إذا يمكن الرفع/التحميل
+    يرجع (False, response) إذا تجاوز الحد
+    extra_bytes = حجم الملف الجديد للتأكد مسبقاً
+    """
+    if is_premium(sub_type):
+        return True, None
+    used = get_used_bytes(user_id)
+    if used + extra_bytes > FREE_LIMIT_B:
+        return False, jsonify({
+            'error': 'storage_full',
+            'used': used,
+            'limit': FREE_LIMIT_B,
+            'used_mb': round(used / 1024 / 1024, 2),
+            'limit_mb': 100
+        }), 403
+
 CONTENT_TYPES = {
     'mp3': 'audio/mpeg', 'm4a': 'audio/mp4',
     'flac': 'audio/flac', 'wav': 'audio/wav',
@@ -72,6 +102,20 @@ CONTENT_TYPES = {
 @app.route('/ping')
 def ping():
     return jsonify({'ok': True, 'server': 'YouVin Cloud 2.0'})
+
+
+@app.route('/storage/<user_id>')
+def storage_info(user_id):
+    if not check_key():
+        return jsonify({'error': 'Unauthorized'}), 401
+    used = get_used_bytes(user_id)
+    return jsonify({
+        'used': used,
+        'limit': FREE_LIMIT_B,
+        'used_mb': round(used / 1024 / 1024, 2),
+        'limit_mb': 100,
+        'full': used >= FREE_LIMIT_B
+    })
 
 
 @app.route('/library')
@@ -104,14 +148,20 @@ def play(user_id, filename):
 def download():
     if not check_key():
         return jsonify({'error': 'Unauthorized'}), 401
-    data    = request.get_json() or {}
-    url     = data.get('url', '').strip()
-    user_id = data.get('user', '').strip()
-    fmt     = data.get('format', 'mp3')
-    quality = data.get('quality', '320')
+    data     = request.get_json() or {}
+    url      = data.get('url', '').strip()
+    user_id  = data.get('user', '').strip()
+    sub_type = data.get('subType', 'free').strip()
+    fmt      = data.get('format', 'mp3')
+    quality  = data.get('quality', '320')
 
     if not url or not user_id:
         return jsonify({'error': 'url and user required'}), 400
+
+    # ── فحص التخزين قبل البدء ────────────────────────────────────────────────
+    ok, err = check_storage(user_id, sub_type)[:2]
+    if not ok:
+        return err
 
     job_id = str(uuid.uuid4())[:8]
     active_jobs[job_id] = {'status': 'starting', 'progress': 0, 'title': '', 'error': ''}
@@ -201,7 +251,8 @@ def job_status(job_id):
 def upload():
     if not check_key():
         return jsonify({'error': 'Unauthorized'}), 401
-    user_id = request.form.get('user', '').strip()
+    user_id  = request.form.get('user', '').strip()
+    sub_type = request.form.get('subType', 'free').strip()
     if not user_id:
         return jsonify({'error': 'user required'}), 400
     f = request.files.get('file')
@@ -212,6 +263,11 @@ def upload():
     ext   = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'mp3'
     title = filename.rsplit('.', 1)[0] if '.' in filename else filename
     data  = f.read()
+
+    # ── فحص التخزين قبل الرفع (مع حجم الملف الجديد) ──────────────────────────
+    ok, err = check_storage(user_id, sub_type, extra_bytes=len(data))[:2]
+    if not ok:
+        return err
 
     s3.put_object(Bucket=R2_BUCKET, Key=r2_key(user_id, filename),
                   Body=data, ContentType=CONTENT_TYPES.get(ext, 'audio/mpeg'))
