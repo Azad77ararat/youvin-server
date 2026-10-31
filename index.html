@@ -399,7 +399,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
         <div class="dlb">LINK EINFÜGEN</div>
         <div class="df">
           <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
-          <input type="url" id="dlurl" placeholder="YouTube / Spotify / SoundCloud …" oninput="clrSt()">
+          <input type="text" id="dlurl" placeholder="YouTube / Spotify / SoundCloud …" oninput="clrSt()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
         </div>
       </div>
       <div id="dst" class="dst"></div>
@@ -770,7 +770,7 @@ async function loadLib() {
   const cached = localStorage.getItem('youvin_lib_'+curUser.id);
   if (cached) { songs = JSON.parse(cached); renderLib(); }
   try {
-    const res  = await fetch(`${SERVER}/library?user=${curUser.id}&key=${API_KEY}`, {signal:AbortSignal.timeout(8000)});
+    const res  = await fetch(`${SERVER}/library?user=${curUser.id}&key=${API_KEY}`, {signal:AbortSignal.timeout(35000)});
     const data = await res.json();
     let raw = data.files || data.songs || [];
     if (raw.length && typeof raw[0]==='string') {
@@ -1386,9 +1386,12 @@ async function startDl() {
   else if(selFmt==='flac'){fmt='flac';quality='0';}
   else if(selFmt==='mp4-hd'){fmt='mp4';quality='best';}
   btn.disabled=true; btn.innerHTML='<span class="spin"></span> Wird gestartet…';
-  st.textContent='Verbinde…'; st.className='dst b';
+  st.textContent='⏳ Server wird gestartet… (bis 30s)'; st.className='dst b';
   try {
-    const res=await fetch(`${SERVER}/download`,{method:'POST',headers:hdrs(),body:JSON.stringify({url,user:curUser.id,format:fmt,quality,subType:curUser.subType||'free'})});
+    const res=await fetch(`${SERVER}/download`,{method:'POST',headers:hdrs(),body:JSON.stringify({url,user:curUser.id,format:fmt,quality,subType:curUser.subType||'free'}),signal:AbortSignal.timeout(35000)});
+    if(!res.ok && res.headers.get('content-type')?.includes('text/html')){
+      throw new Error('Server schläft noch – bitte erneut versuchen');
+    }
     const data=await res.json();
     if(data.error==='storage_full'){resetBtn();showStorageWall();return;}
     if(!data.job_id) throw new Error(data.error||'Fehler');
