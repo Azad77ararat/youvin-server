@@ -180,7 +180,7 @@ def download():
                 'cookiefile': cookies_path if os.path.exists(cookies_path) else None,
                 'extractor_args': {
                     'youtube': {
-                        'player_client': ['ios'],
+                        'player_client': ['ios', 'web'],
                     }
                 },
                 'http_headers': {
