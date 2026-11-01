@@ -172,12 +172,23 @@ def download():
         try:
             active_jobs[job_id]['status'] = 'downloading'
 
-            cookies_path = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+            # كوكيز من environment variable أو ملف
+            cookies_content = os.environ.get('YOUTUBE_COOKIES', '')
+            cookies_path = None
+            if cookies_content:
+                cookies_path = os.path.join(tmp_dir, 'cookies.txt')
+                with open(cookies_path, 'w', encoding='utf-8') as f:
+                    f.write(cookies_content)
+            else:
+                fp = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+                if os.path.exists(fp):
+                    cookies_path = fp
+
             base_opts = {
                 'outtmpl': f'{tmp_dir}/%(title)s.%(ext)s',
                 'noplaylist': True,
                 'quiet': True,
-                'cookiefile': cookies_path if os.path.exists(cookies_path) else None,
+                'cookiefile': cookies_path,
                 'http_headers': {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 },
