@@ -102,7 +102,13 @@ CONTENT_TYPES = {
 
 @app.route('/ping')
 def ping():
-    return jsonify({'ok': True, 'server': 'YouVin Cloud 2.0'})
+    cookies = os.environ.get('YOUTUBE_COOKIES', '')
+    return jsonify({
+        'ok': True,
+        'server': 'YouVin Cloud 2.0',
+        'cookies_loaded': bool(cookies),
+        'cookies_lines': len(cookies.splitlines()) if cookies else 0
+    })
 
 
 @app.route('/storage/<user_id>')
