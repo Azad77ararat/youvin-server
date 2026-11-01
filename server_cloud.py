@@ -172,34 +172,35 @@ def download():
         try:
             active_jobs[job_id]['status'] = 'downloading'
 
+            base_opts = {
+                'outtmpl': f'{tmp_dir}/%(title)s.%(ext)s',
+                'noplaylist': True,
+                'quiet': True,
+                'extractor_args': {'youtube': {'player_client': ['web']}},
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                },
+            }
             if fmt == 'mp3':
-                opts = {
+                opts = {**base_opts,
                     'format': 'bestaudio/best',
-                    'outtmpl': f'{tmp_dir}/%(title)s.%(ext)s',
                     'postprocessors': [{'key': 'FFmpegExtractAudio',
                                         'preferredcodec': 'mp3',
                                         'preferredquality': quality}],
-                    'noplaylist': True, 'quiet': True,
                 }
             elif fmt == 'flac':
-                opts = {
+                opts = {**base_opts,
                     'format': 'bestaudio/best',
-                    'outtmpl': f'{tmp_dir}/%(title)s.%(ext)s',
                     'postprocessors': [{'key': 'FFmpegExtractAudio',
                                         'preferredcodec': 'flac'}],
-                    'noplaylist': True, 'quiet': True,
                 }
             elif fmt == 'm4a':
-                opts = {
+                opts = {**base_opts,
                     'format': 'bestaudio[ext=m4a]/bestaudio/best',
-                    'outtmpl': f'{tmp_dir}/%(title)s.%(ext)s',
-                    'noplaylist': True, 'quiet': True,
                 }
             else:  # mp4
-                opts = {
+                opts = {**base_opts,
                     'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-                    'outtmpl': f'{tmp_dir}/%(title)s.%(ext)s',
-                    'noplaylist': True, 'quiet': True,
                 }
 
             with yt_dlp.YoutubeDL(opts) as ydl:
