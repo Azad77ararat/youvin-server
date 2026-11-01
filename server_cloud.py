@@ -178,13 +178,8 @@ def download():
                 'noplaylist': True,
                 'quiet': True,
                 'cookiefile': cookies_path if os.path.exists(cookies_path) else None,
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['ios', 'web'],
-                    }
-                },
                 'http_headers': {
-                    'User-Agent': 'com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X;)',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 },
             }
             if fmt == 'mp3':
