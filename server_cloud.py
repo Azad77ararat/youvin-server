@@ -4,7 +4,7 @@ Render.com + Cloudflare R2
 كل مستخدم له مكتبة خاصة — يعمل 24/7
 """
 
-import os, uuid, json, re, threading, tempfile, shutil, subprocess
+import os, uuid, json, re, threading, tempfile, shutil
 import boto3
 from botocore.config import Config
 from flask import Flask, request, jsonify
@@ -13,12 +13,6 @@ import yt_dlp
 
 app = Flask(__name__)
 CORS(app)
-
-# تحديث yt-dlp تلقائياً عند البدء
-try:
-    subprocess.run(['pip', 'install', '--upgrade', 'yt-dlp', '-q'], timeout=60)
-except:
-    pass
 
 # ── R2 Config (من Environment Variables في Render) ────────────────────────────
 R2_ACCOUNT_ID = os.environ.get('R2_ACCOUNT_ID', '')
