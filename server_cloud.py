@@ -172,10 +172,12 @@ def download():
         try:
             active_jobs[job_id]['status'] = 'downloading'
 
+            cookies_path = os.path.join(os.path.dirname(__file__), 'cookies.txt')
             base_opts = {
                 'outtmpl': f'{tmp_dir}/%(title)s.%(ext)s',
                 'noplaylist': True,
                 'quiet': True,
+                'cookiefile': cookies_path if os.path.exists(cookies_path) else None,
                 'extractor_args': {
                     'youtube': {
                         'player_client': ['ios'],
