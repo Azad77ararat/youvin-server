@@ -81,13 +81,14 @@ def check_storage(user_id: str, sub_type: str, extra_bytes: int = 0):
         return True, None
     used = get_used_bytes(user_id)
     if used + extra_bytes > FREE_LIMIT_B:
-        return False, jsonify({
+        return False, (jsonify({
             'error': 'storage_full',
             'used': used,
             'limit': FREE_LIMIT_B,
             'used_mb': round(used / 1024 / 1024, 2),
             'limit_mb': 100
-        }), 403
+        }), 403)
+    return True, None
 
 CONTENT_TYPES = {
     'mp3': 'audio/mpeg', 'm4a': 'audio/mp4',
@@ -159,7 +160,7 @@ def download():
         return jsonify({'error': 'url and user required'}), 400
 
     # ── فحص التخزين قبل البدء ────────────────────────────────────────────────
-    ok, err = check_storage(user_id, sub_type)[:2]
+    ok, err = check_storage(user_id, sub_type)
     if not ok:
         return err
 
@@ -265,7 +266,7 @@ def upload():
     data  = f.read()
 
     # ── فحص التخزين قبل الرفع (مع حجم الملف الجديد) ──────────────────────────
-    ok, err = check_storage(user_id, sub_type, extra_bytes=len(data))[:2]
+    ok, err = check_storage(user_id, sub_type, extra_bytes=len(data))
     if not ok:
         return err
 
