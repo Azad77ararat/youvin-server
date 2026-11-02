@@ -227,9 +227,9 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 .pd{font-size:13px;color:var(--label3);margin-top:2px;}
 .ppill{padding:6px 14px;border-radius:99px;border:none;font-size:13px;font-weight:600;color:#fff;cursor:pointer;}
 
-/* MINI PLAYER */
-#mp{position:fixed;bottom:calc(var(--sb)+56px+10px);left:12px;right:12px;background:rgba(44,44,46,.95);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-radius:var(--rx);border:.5px solid var(--sep);box-shadow:0 8px 40px rgba(0,0,0,.5);z-index:49;overflow:hidden;transform:translateY(130px) scale(.95);opacity:0;transition:transform .35s cubic-bezier(.32,2,.55,.89),opacity .25s;pointer-events:none;}
-#mp.show{transform:translateY(0) scale(1);opacity:1;pointer-events:auto;}
+/* MINI PLAYER — sits above the nav bar */
+#mp{position:fixed;bottom:calc(var(--sb)+56px);left:0;right:0;background:rgba(28,28,30,.97);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid var(--sep);border-radius:0;box-shadow:0 -4px 20px rgba(0,0,0,.4);z-index:49;overflow:hidden;transform:translateY(100%);opacity:0;transition:transform .35s cubic-bezier(.32,.72,0,1),opacity .25s;pointer-events:none;}
+#mp.show{transform:translateY(0);opacity:1;pointer-events:auto;}
 .mpm{display:flex;align-items:center;gap:12px;padding:10px 12px 6px;cursor:pointer;}
 .mpa{width:42px;height:42px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .mpa svg{width:20px;height:20px;fill:#fff;}
@@ -776,6 +776,17 @@ async function loadLib() {
     if (raw.length && typeof raw[0]==='string') {
       raw = raw.map(f => ({filename:f, title:f.replace(/\.[^.]+$/,''), ext:f.split('.').pop().toLowerCase(), size:0}));
     }
+    // preserve local order: sort raw by saved order, appending new songs at end
+    const savedOrder = JSON.parse(localStorage.getItem('youvin_lib_'+curUser.id) || '[]').map(s=>s.filename);
+    if (savedOrder.length) {
+      const orderMap = {};
+      savedOrder.forEach((fn,i) => orderMap[fn] = i);
+      raw.sort((a,b) => {
+        const ai = orderMap[a.filename] ?? 99999;
+        const bi = orderMap[b.filename] ?? 99999;
+        return ai - bi;
+      });
+    }
     songs = raw;
     localStorage.setItem('youvin_lib_'+curUser.id, JSON.stringify(songs));
     renderLib();
@@ -1199,14 +1210,9 @@ async function playS(idx, plId) {
   if (plId) { const pl = playlists.find(p=>p.id===plId); curQueue = pl?.songs || null; }
   else curQueue = null;
   const s = songs[idx];
-  try {
-    const res  = await fetch(`${SERVER}/play/${curUser.id}/${encodeURIComponent(s.filename)}?key=${API_KEY}`);
-    const data = await res.json();
-    if (data.url) { aud.src=data.url; aud.play(); }
-  } catch {
-    aud.src=`${SERVER}/play/${curUser.id}/${encodeURIComponent(s.filename)}?key=${API_KEY}`;
-    aud.play();
-  }
+  // play directly via URL — no pre-fetch needed
+  aud.src=`${SERVER}/play/${curUser.id}/${encodeURIComponent(s.filename)}?key=${API_KEY}`;
+  try { await aud.play(); } catch(e) { console.warn('play error',e); }
   document.getElementById('mptit').textContent = s.title;
   document.getElementById('mpsubt').textContent = s.ext?s.ext.toUpperCase():'—';
   document.getElementById('fptit').textContent  = s.title;
@@ -1226,8 +1232,15 @@ function prevS() {
 function nextInQueue() {
   if (curQueue) {
     const i = curQueue.indexOf(songs[curIdx]?.filename);
-    if (i>=0 && i<curQueue.length-1) { const s=songs.find(x=>x.filename===curQueue[i+1]); if(s) { playS(songs.indexOf(s),null); return; } }
-  } else { if (curIdx<songs.length-1) { playS(curIdx+1,null); return; } }
+    if (i>=0 && i<curQueue.length-1) {
+      const s=songs.find(x=>x.filename===curQueue[i+1]);
+      if(s) { playS(songs.indexOf(s), null); return; }
+    }
+  } else {
+    if (curIdx>=0 && curIdx<songs.length-1) { playS(curIdx+1, null); return; }
+  }
+  // end of list — stop cleanly
+  playing=false; updIco(); rerender();
 }
 function nextS() { nextInQueue(); }
 
