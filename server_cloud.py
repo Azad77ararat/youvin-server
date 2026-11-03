@@ -1,354 +1,311 @@
 """
-YouVin Cloud Server v2
-Render.com + Cloudflare R2
-كل مستخدم له مكتبة خاصة — يعمل 24/7
+YouVin Cloud Server v4.0 — Render.com
+- /library, /delete, /rename, /reorder  — يقرأ/يعدّل R2
+- /download  — يحمّل من YouTube على Render ويرفع إلى R2
+- /job/<id>  — حالة التحميل
+- الأغاني تُشغَّل مباشرة من R2
 """
 
-import os, uuid, json, re, threading, tempfile, shutil
+import os, re, json, threading, uuid, time, tempfile, shutil
 import boto3
-from botocore.config import Config
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import yt_dlp
+
+# ── R2 Config ─────────────────────────────────────────────────────────────────
+R2_ACCOUNT_ID = os.environ.get('R2_ACCOUNT_ID', '8143bcf45fca20e95fb4d43f3e46c474')
+R2_ACCESS_KEY = os.environ.get('R2_ACCESS_KEY', '8f12f945a7283401f0718fe5108cca79')
+R2_SECRET_KEY = os.environ.get('R2_SECRET_KEY', '385247751cb11de26bede82f3617143df89439d34df94b6a12553fa05794629a')
+R2_BUCKET     = os.environ.get('R2_BUCKET', 'youvin-music')
+R2_ENDPOINT   = f'https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com'
+R2_PUBLIC_URL = f'https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com/{R2_BUCKET}'
+
+API_KEY       = os.environ.get('API_KEY', 'youvin-secret-2024')
+
+# ── S3 Client ─────────────────────────────────────────────────────────────────
+s3 = boto3.client(
+    's3',
+    endpoint_url=R2_ENDPOINT,
+    aws_access_key_id=R2_ACCESS_KEY,
+    aws_secret_access_key=R2_SECRET_KEY,
+    region_name='auto'
+)
 
 app = Flask(__name__)
 CORS(app)
 
-# ── R2 Config (من Environment Variables في Render) ────────────────────────────
-R2_ACCOUNT_ID = os.environ.get('R2_ACCOUNT_ID', '')
-R2_ACCESS_KEY = os.environ.get('R2_ACCESS_KEY', '')
-R2_SECRET_KEY = os.environ.get('R2_SECRET_KEY', '')
-R2_BUCKET     = os.environ.get('R2_BUCKET', 'youvin-music')
-API_KEY       = os.environ.get('YOUVIN_API_KEY', 'youvin-secret-2024')
+jobs = {}  # job_id → {status, title, url, error}
 
-s3 = boto3.client(
-    's3',
-    endpoint_url=f'https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com',
-    aws_access_key_id=R2_ACCESS_KEY,
-    aws_secret_access_key=R2_SECRET_KEY,
-    config=Config(signature_version='s3v4'),
-    region_name='auto'
-)
+# ── Auth ──────────────────────────────────────────────────────────────────────
+def auth_ok():
+    return (request.headers.get('X-API-Key') == API_KEY or
+            request.args.get('key') == API_KEY)
 
-# ── حدود التخزين ─────────────────────────────────────────────────────────────
-FREE_LIMIT_B = 100 * 1024 * 1024   # 100 MB
+# ── Content type helper ───────────────────────────────────────────────────────
+def get_content_type(filename):
+    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'mp3'
+    types = {
+        'mp3': 'audio/mpeg', 'm4a': 'audio/mp4', 'flac': 'audio/flac',
+        'wav': 'audio/wav', 'ogg': 'audio/ogg', 'mp4': 'video/mp4',
+        'mov': 'video/quicktime', 'mkv': 'video/x-matroska',
+        'webm': 'video/webm', 'avi': 'video/avi'
+    }
+    return types.get(ext, 'audio/mpeg')
 
-# ── حالة التحميل ──────────────────────────────────────────────────────────────
-active_jobs: dict = {}
-
-# ── مساعدات ───────────────────────────────────────────────────────────────────
-def check_key():
-    k = request.headers.get('X-API-Key') or request.args.get('key')
-    return k == API_KEY
-
-def safe_name(name: str) -> str:
-    return re.sub(r'[^\w.\-]', '_', name)
-
-def r2_key(user_id: str, filename: str) -> str:
-    return f'users/{safe_name(user_id)}/songs/{safe_name(filename)}'
-
-def meta_key(user_id: str) -> str:
-    return f'users/{safe_name(user_id)}/library.json'
-
-def load_library(user_id: str) -> list:
+# ── Storage size for user ─────────────────────────────────────────────────────
+def get_user_storage(user):
     try:
-        obj = s3.get_object(Bucket=R2_BUCKET, Key=meta_key(user_id))
-        return json.loads(obj['Body'].read())
+        resp = s3.list_objects_v2(Bucket=R2_BUCKET, Prefix=f'songs/{user}/')
+        return sum(o['Size'] for o in resp.get('Contents', []))
     except:
-        return []
+        return 0
 
-def save_library(user_id: str, songs: list):
-    data = json.dumps(songs, ensure_ascii=False).encode()
-    s3.put_object(Bucket=R2_BUCKET, Key=meta_key(user_id),
-                  Body=data, ContentType='application/json')
-
-def get_used_bytes(user_id: str) -> int:
-    """حساب المساحة المستخدمة من library.json"""
-    lib = load_library(user_id)
-    return sum(s.get('size', 0) for s in lib)
-
-def is_premium(sub_type: str) -> bool:
-    """هل المستخدم premium؟"""
-    return sub_type in ('yearly', 'lifetime', 'admin')
-
-def check_storage(user_id: str, sub_type: str, extra_bytes: int = 0):
-    """
-    يرجع (True, None) إذا يمكن الرفع/التحميل
-    يرجع (False, response) إذا تجاوز الحد
-    extra_bytes = حجم الملف الجديد للتأكد مسبقاً
-    """
-    if is_premium(sub_type):
-        return True, None
-    used = get_used_bytes(user_id)
-    if used + extra_bytes > FREE_LIMIT_B:
-        return False, (jsonify({
-            'error': 'storage_full',
-            'used': used,
-            'limit': FREE_LIMIT_B,
-            'used_mb': round(used / 1024 / 1024, 2),
-            'limit_mb': 100
-        }), 403)
-    return True, None
-
-CONTENT_TYPES = {
-    'mp3': 'audio/mpeg', 'm4a': 'audio/mp4',
-    'flac': 'audio/flac', 'wav': 'audio/wav',
-    'ogg': 'audio/ogg',  'mp4': 'video/mp4'
-}
-
-# ─────────────────────────────────────────────────────────────────────────────
-# ROUTES
-# ─────────────────────────────────────────────────────────────────────────────
-
+# ── Ping ──────────────────────────────────────────────────────────────────────
 @app.route('/ping')
 def ping():
-    cookies = os.environ.get('YOUTUBE_COOKIES', '')
-    return jsonify({
-        'ok': True,
-        'server': 'YouVin Cloud 2.0',
-        'cookies_loaded': bool(cookies),
-        'cookies_lines': len(cookies.splitlines()) if cookies else 0
-    })
+    return jsonify({'ok': True, 'server': 'YouVin Cloud v4.0 (Render)'})
 
-
-@app.route('/storage/<user_id>')
-def storage_info(user_id):
-    if not check_key():
-        return jsonify({'error': 'Unauthorized'}), 401
-    used = get_used_bytes(user_id)
-    return jsonify({
-        'used': used,
-        'limit': FREE_LIMIT_B,
-        'used_mb': round(used / 1024 / 1024, 2),
-        'limit_mb': 100,
-        'full': used >= FREE_LIMIT_B
-    })
-
-
-@app.route('/library')
-def library():
-    if not check_key():
-        return jsonify({'error': 'Unauthorized'}), 401
-    user_id = request.args.get('user', '').strip()
-    if not user_id:
-        return jsonify({'error': 'user param required'}), 400
-    songs = load_library(user_id)
-    return jsonify({'files': songs, 'count': len(songs)})
-
-
-@app.route('/play/<user_id>/<filename>')
-def play(user_id, filename):
-    if not check_key():
-        return jsonify({'error': 'Unauthorized'}), 401
-    try:
-        url = s3.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': R2_BUCKET, 'Key': r2_key(user_id, filename)},
-            ExpiresIn=3600
-        )
-        return jsonify({'url': url})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 404
-
-
+# ── Download from YouTube ─────────────────────────────────────────────────────
 @app.route('/download', methods=['POST'])
 def download():
-    if not check_key():
-        return jsonify({'error': 'Unauthorized'}), 401
-    data     = request.get_json() or {}
-    url      = data.get('url', '').strip()
-    user_id  = data.get('user', '').strip()
-    sub_type = data.get('subType', 'free').strip()
-    fmt      = data.get('format', 'mp3')
-    quality  = data.get('quality', '320')
+    if not auth_ok():
+        return jsonify({'error': 'unauthorized'}), 401
 
-    if not url or not user_id:
-        return jsonify({'error': 'url and user required'}), 400
+    data    = request.get_json(force=True)
+    url     = data.get('url', '').strip()
+    user    = data.get('user', 'unknown')
+    fmt     = data.get('format', 'mp3')
+    quality = data.get('quality', '320')
+    sub     = data.get('subType', 'free')
 
-    # ── فحص التخزين قبل البدء ────────────────────────────────────────────────
-    ok, err = check_storage(user_id, sub_type)
-    if not ok:
-        return err
+    if not url:
+        return jsonify({'error': 'no url'}), 400
 
-    job_id = str(uuid.uuid4())[:8]
-    active_jobs[job_id] = {'status': 'starting', 'progress': 0, 'title': '', 'error': ''}
+    # Storage limit check (100 MB free)
+    used = get_user_storage(user)
+    if sub == 'free' and used >= 100 * 1024 * 1024:
+        return jsonify({'error': 'storage_full'}), 400
 
-    def run():
-        tmp_dir = tempfile.mkdtemp()
+    job_id = str(uuid.uuid4())
+    jobs[job_id] = {'status': 'pending', 'title': None, 'url': None, 'error': None}
+
+    def do_download():
         try:
-            active_jobs[job_id]['status'] = 'downloading'
+            import yt_dlp
 
-            # كوكيز من environment variable أو ملف
-            cookies_content = os.environ.get('YOUTUBE_COOKIES', '')
-            cookies_path = None
-            if cookies_content:
-                cookies_path = os.path.join(tmp_dir, 'cookies.txt')
-                with open(cookies_path, 'w', encoding='utf-8') as f:
-                    f.write(cookies_content)
-            else:
-                fp = os.path.join(os.path.dirname(__file__), 'cookies.txt')
-                if os.path.exists(fp):
-                    cookies_path = fp
+            tmp_dir = tempfile.mkdtemp(prefix=f'youvin_{job_id}_')
 
-            base_opts = {
-                'outtmpl': f'{tmp_dir}/%(title)s.%(ext)s',
-                'noplaylist': True,
-                'quiet': True,
-                'cookiefile': cookies_path,
-                'http_headers': {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                },
-            }
-            if fmt == 'mp3':
-                opts = {**base_opts,
-                    'format': 'bestaudio/best',
-                    'postprocessors': [{'key': 'FFmpegExtractAudio',
-                                        'preferredcodec': 'mp3',
-                                        'preferredquality': quality}],
-                }
-            elif fmt == 'flac':
-                opts = {**base_opts,
-                    'format': 'bestaudio/best',
-                    'postprocessors': [{'key': 'FFmpegExtractAudio',
-                                        'preferredcodec': 'flac'}],
-                }
-            elif fmt == 'm4a':
-                opts = {**base_opts,
-                    'format': 'bestaudio[ext=m4a]/bestaudio/best',
-                }
-            else:  # mp4
-                opts = {**base_opts,
+            # cookies file path (upload to Render via env or file)
+            cookies_path = os.environ.get('COOKIES_FILE', '')
+            if cookies_path and not os.path.exists(cookies_path):
+                cookies_path = ''
+
+            if fmt == 'mp4':
+                ydl_opts = {
                     'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                    'outtmpl': os.path.join(tmp_dir, '%(title)s.%(ext)s'),
+                    'merge_output_format': 'mp4',
+                    'noplaylist': True,
+                    'quiet': True,
+                }
+            else:
+                bitrate  = quality if sub != 'free' else quality
+                audio_fmt = {'mp3': 'mp3', 'm4a': 'm4a', 'flac': 'flac'}.get(fmt, 'mp3')
+                ydl_opts = {
+                    'format': 'bestaudio/best',
+                    'outtmpl': os.path.join(tmp_dir, '%(title)s.%(ext)s'),
+                    'postprocessors': [{
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': audio_fmt,
+                        'preferredquality': bitrate,
+                    }],
+                    'noplaylist': True,
+                    'quiet': True,
                 }
 
-            with yt_dlp.YoutubeDL(opts) as ydl:
+            if cookies_path:
+                ydl_opts['cookiefile'] = cookies_path
+
+            jobs[job_id]['status'] = 'downloading'
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
                 title = info.get('title', 'Unknown')
 
-            active_jobs[job_id]['title'] = title
             files = os.listdir(tmp_dir)
             if not files:
-                raise Exception('لم يُحمَّل أي ملف')
+                raise Exception('Download failed — no file')
 
-            local_path = os.path.join(tmp_dir, files[0])
-            ext = files[0].rsplit('.', 1)[-1].lower()
-            filename = f'{title}.{ext}'
+            local_file = os.path.join(tmp_dir, files[0])
+            filename   = files[0]
+            safe       = re.sub(r'[^\w\-. ]', '_', filename)
+            r2_key     = f'songs/{user}/{safe}'
+            ct         = get_content_type(safe)
 
-            active_jobs[job_id]['status'] = 'uploading'
-            key = r2_key(user_id, filename)
-            ct  = CONTENT_TYPES.get(ext, 'audio/mpeg')
-            with open(local_path, 'rb') as f:
-                s3.put_object(Bucket=R2_BUCKET, Key=key, Body=f, ContentType=ct)
+            jobs[job_id]['status'] = 'uploading'
 
-            size = os.path.getsize(local_path)
-            lib  = load_library(user_id)
-            lib  = [s for s in lib if s.get('filename') != filename]
-            lib.append({'filename': filename, 'title': title, 'ext': ext, 'size': size})
-            save_library(user_id, lib)
+            s3.upload_file(
+                local_file, R2_BUCKET, r2_key,
+                ExtraArgs={'ContentType': ct}
+            )
 
-            active_jobs[job_id].update({'status': 'done', 'progress': 100})
+            r2_url = f'{R2_PUBLIC_URL}/{r2_key}'
+
+            # Cleanup
+            try:
+                os.remove(local_file)
+                os.rmdir(tmp_dir)
+            except:
+                pass
+
+            jobs[job_id].update({'status': 'done', 'title': title, 'url': r2_url, 'filename': safe})
 
         except Exception as e:
-            active_jobs[job_id].update({'status': 'error', 'error': str(e)})
-        finally:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
+            jobs[job_id].update({'status': 'error', 'error': str(e)})
 
-    threading.Thread(target=run, daemon=True).start()
-    return jsonify({'job_id': job_id, 'success': True})
+    threading.Thread(target=do_download, daemon=True).start()
+    return jsonify({'job_id': job_id})
 
+# ── Upload file directly (from device) ───────────────────────────────────────
+@app.route('/upload', methods=['POST'])
+def upload():
+    if not auth_ok():
+        return jsonify({'error': 'unauthorized'}), 401
+    user = request.form.get('user', 'unknown')
+    sub  = request.form.get('subType', 'free')
+    f    = request.files.get('file')
+    if not f:
+        return jsonify({'error': 'no file'}), 400
 
+    used = get_user_storage(user)
+    if sub == 'free' and used >= 100 * 1024 * 1024:
+        return jsonify({'error': 'storage_full'}), 400
+
+    filename = re.sub(r'[^\w\-. ]', '_', f.filename or f'upload_{int(time.time())}.mp3')
+    r2_key   = f'songs/{user}/{filename}'
+    ct       = get_content_type(filename)
+
+    try:
+        s3.upload_fileobj(f, R2_BUCKET, r2_key, ExtraArgs={'ContentType': ct})
+        url = f'{R2_PUBLIC_URL}/{r2_key}'
+        title = filename.rsplit('.', 1)[0].replace('_', ' ')
+        return jsonify({'ok': True, 'url': url, 'filename': filename, 'title': title})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ── Job status ────────────────────────────────────────────────────────────────
 @app.route('/job/<job_id>')
 def job_status(job_id):
-    if not check_key():
-        return jsonify({'error': 'Unauthorized'}), 401
-    j = active_jobs.get(job_id)
+    if not auth_ok():
+        return jsonify({'error': 'unauthorized'}), 401
+    j = jobs.get(job_id)
     if not j:
         return jsonify({'error': 'not found'}), 404
     return jsonify(j)
 
+# ── Library: list user's songs from R2 ───────────────────────────────────────
+@app.route('/library')
+def library():
+    if not auth_ok():
+        return jsonify({'error': 'unauthorized'}), 401
 
-@app.route('/upload', methods=['POST'])
-def upload():
-    if not check_key():
-        return jsonify({'error': 'Unauthorized'}), 401
-    user_id  = request.form.get('user', '').strip()
-    sub_type = request.form.get('subType', 'free').strip()
-    if not user_id:
-        return jsonify({'error': 'user required'}), 400
-    f = request.files.get('file')
-    if not f:
-        return jsonify({'error': 'no file'}), 400
+    user = request.args.get('user', '')
+    if not user:
+        return jsonify({'error': 'no user'}), 400
 
-    filename = safe_name(f.filename)
-    ext   = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'mp3'
-    title = filename.rsplit('.', 1)[0] if '.' in filename else filename
-    data  = f.read()
-
-    # ── فحص التخزين قبل الرفع (مع حجم الملف الجديد) ──────────────────────────
-    ok, err = check_storage(user_id, sub_type, extra_bytes=len(data))
-    if not ok:
-        return err
-
-    s3.put_object(Bucket=R2_BUCKET, Key=r2_key(user_id, filename),
-                  Body=data, ContentType=CONTENT_TYPES.get(ext, 'audio/mpeg'))
-
-    lib = load_library(user_id)
-    lib = [s for s in lib if s.get('filename') != filename]
-    lib.append({'filename': filename, 'title': title, 'ext': ext, 'size': len(data)})
-    save_library(user_id, lib)
-
-    return jsonify({'success': True, 'filename': filename, 'title': title})
-
-
-@app.route('/delete/<user_id>/<filename>', methods=['DELETE'])
-def delete_song(user_id, filename):
-    if not check_key():
-        return jsonify({'error': 'Unauthorized'}), 401
     try:
-        s3.delete_object(Bucket=R2_BUCKET, Key=r2_key(user_id, filename))
-        lib = load_library(user_id)
-        lib = [s for s in lib if s.get('filename') != filename]
-        save_library(user_id, lib)
-        return jsonify({'success': True})
+        resp    = s3.list_objects_v2(Bucket=R2_BUCKET, Prefix=f'songs/{user}/')
+        objects = resp.get('Contents', [])
+
+        songs       = []
+        total_bytes = 0
+        for obj in objects:
+            key      = obj['Key']
+            filename = key.split('/')[-1]
+            if not filename:
+                continue
+            size = obj['Size']
+            total_bytes += size
+            ext   = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'mp3'
+            title = filename.rsplit('.', 1)[0].replace('_', ' ')
+            url   = f'{R2_PUBLIC_URL}/{key}'
+            songs.append({'filename': filename, 'title': title, 'url': url, 'size': size, 'ext': ext})
+
+        songs.sort(key=lambda s: s['filename'])
+
+        # Apply saved order
+        try:
+            obj   = s3.get_object(Bucket=R2_BUCKET, Key=f'meta/{user}/order.json')
+            order = json.loads(obj['Body'].read())
+            order_map = {fn: i for i, fn in enumerate(order)}
+            songs.sort(key=lambda s: order_map.get(s['filename'], 9999))
+        except:
+            pass
+
+        limit_bytes = 100 * 1024 * 1024
+        storage = {
+            'used':    total_bytes,
+            'limit':   limit_bytes,
+            'percent': round(total_bytes / limit_bytes * 100, 1) if limit_bytes > 0 else 0
+        }
+
+        return jsonify({'songs': songs, 'storage': storage})
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ── Delete song from R2 ───────────────────────────────────────────────────────
+@app.route('/delete/<user>/<filename>', methods=['DELETE'])
+def delete_song(user, filename):
+    if not auth_ok():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        s3.delete_object(Bucket=R2_BUCKET, Key=f'songs/{user}/{filename}')
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
+# ── Rename ────────────────────────────────────────────────────────────────────
 @app.route('/rename', methods=['POST'])
 def rename():
-    if not check_key():
-        return jsonify({'error': 'Unauthorized'}), 401
-    data      = request.get_json() or {}
-    user_id   = data.get('user', '').strip()
-    old_name  = data.get('filename', '').strip()
-    new_title = data.get('newTitle', '').strip()
-    if not all([user_id, old_name, new_title]):
+    if not auth_ok():
+        return jsonify({'error': 'unauthorized'}), 401
+    data      = request.get_json(force=True)
+    user      = data.get('user', '')
+    old_name  = data.get('old', '')
+    new_title = data.get('new', '').strip()
+    if not user or not old_name or not new_title:
         return jsonify({'error': 'missing fields'}), 400
-    lib = load_library(user_id)
-    for s in lib:
-        if s.get('filename') == old_name:
-            s['title'] = new_title
-    save_library(user_id, lib)
-    return jsonify({'success': True})
+    ext      = old_name.rsplit('.', 1)[-1] if '.' in old_name else 'mp3'
+    new_safe = re.sub(r'[^\w\-. ]', '_', new_title) + '.' + ext
+    old_key  = f'songs/{user}/{old_name}'
+    new_key  = f'songs/{user}/{new_safe}'
+    try:
+        s3.copy_object(Bucket=R2_BUCKET, CopySource={'Bucket': R2_BUCKET, 'Key': old_key}, Key=new_key)
+        s3.delete_object(Bucket=R2_BUCKET, Key=old_key)
+        return jsonify({'ok': True, 'filename': new_safe, 'url': f'{R2_PUBLIC_URL}/{new_key}'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-
+# ── Reorder ───────────────────────────────────────────────────────────────────
 @app.route('/reorder', methods=['POST'])
 def reorder():
-    if not check_key():
-        return jsonify({'error': 'Unauthorized'}), 401
-    data    = request.get_json() or {}
-    user_id = data.get('user', '').strip()
-    order   = data.get('order', [])
-    if not user_id:
-        return jsonify({'error': 'user required'}), 400
-    lib     = load_library(user_id)
-    idx_map = {s['filename']: s for s in lib}
-    new_lib = [idx_map[fn] for fn in order if fn in idx_map]
-    new_lib += [s for s in lib if s['filename'] not in set(order)]
-    save_library(user_id, new_lib)
-    return jsonify({'success': True})
-
+    if not auth_ok():
+        return jsonify({'error': 'unauthorized'}), 401
+    data  = request.get_json(force=True)
+    user  = data.get('user', '')
+    order = data.get('order', [])
+    if not user:
+        return jsonify({'error': 'no user'}), 400
+    try:
+        s3.put_object(
+            Bucket=R2_BUCKET, Key=f'meta/{user}/order.json',
+            Body=json.dumps(order).encode(), ContentType='application/json'
+        )
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    print(f'YouVin Cloud v4.0 (Render) — port {port}')
+    app.run(host='0.0.0.0', port=port, debug=False)

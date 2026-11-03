@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- YouVin v3.1 — Hybrid R2: local download + Render cloud API -->
+<!-- YouVin v4.0 — Full Cloud: Render downloads + R2 storage -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -15,7 +15,7 @@
 <script>
 // Auto-update: wenn neue Version auf Server, Seite neu laden
 (function(){
-  const APP_VER='3.1';
+  const APP_VER='4.0';
   const stored=localStorage.getItem('youvin_app_ver');
   if(stored && stored!==APP_VER){
     localStorage.setItem('youvin_app_ver',APP_VER);
@@ -437,17 +437,6 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
       <div class="dfw"><div class="dlb">FORMAT</div></div>
       <div class="fmtl" id="fmtl"></div>
 
-      <!-- Local server URL setting -->
-      <div style="margin:16px 16px 0;">
-        <div class="dlb">PC-SERVER (Cloudflare Tunnel)</div>
-        <div class="df" style="margin-top:6px;border-radius:var(--rl);background:var(--bg2);padding:0 14px;">
-          <input type="url" id="local-srv-inp" placeholder="https://xxxxx.trycloudflare.com"
-            style="flex:1;padding:13px 0;background:none;border:none;outline:none;color:var(--label);font-size:15px;font-family:inherit;"
-            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-            oninput="saveLocalSrv()">
-        </div>
-        <div style="font-size:12px;color:var(--label4);margin-top:6px;padding:0 4px;">Starte auf dem PC: <code style="color:var(--label3);">cloudflared tunnel --url localhost:5000</code></div>
-      </div>
     </div>
 
     <!-- SEARCH -->
@@ -645,10 +634,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-// Cloud server (Render) — library, delete, rename, reorder
 const SERVER  = 'https://youvin-api.onrender.com';
-// Local server (your PC via Cloudflare Tunnel) — download, upload
-let   LOCAL   = localStorage.getItem('youvin_local') || '';
 const API_KEY = 'youvin-secret-2024';
 const FMTS = [
   {id:'mp3-320',l:'MP3 · 320 kbps'},{id:'mp3-128',l:'MP3 · 128 kbps'},
@@ -789,7 +775,6 @@ function showApp() {
                       '100 MB kostenloser Speicher';
   loadPlaylists();
   loadLib();
-  initLocalSrv();
 }
 
 function goTab(id) {
@@ -1464,18 +1449,6 @@ function buildFmts() {
 function pickFmt(id) { selFmt=id; buildFmts(); }
 function clrSt() { const s=document.getElementById('dst'); s.textContent=''; s.className='dst'; }
 
-// ── LOCAL SERVER SETTING ──────────────────────────────────────────────────────
-function saveLocalSrv() {
-  const v = document.getElementById('local-srv-inp').value.trim().replace(/\/+$/, '');
-  LOCAL = v;
-  localStorage.setItem('youvin_local', v);
-}
-function initLocalSrv() {
-  const saved = localStorage.getItem('youvin_local') || '';
-  LOCAL = saved;
-  const inp = document.getElementById('local-srv-inp');
-  if (inp) inp.value = saved;
-}
 
 async function startDl() {
   const url=document.getElementById('dlurl').value.trim();
@@ -1488,13 +1461,11 @@ async function startDl() {
   else if(selFmt==='flac'){fmt='flac';quality='0';}
   else if(selFmt==='mp4-hd'){fmt='mp4';quality='best';}
   btn.disabled=true; btn.innerHTML='<span class="spin"></span> Wird gestartet…';
-  st.textContent='⏳ Server wird gestartet… (bis 30s)'; st.className='dst b';
+  st.textContent='⏳ Wird gestartet…'; st.className='dst b';
   try {
-    const localSrv = LOCAL || localStorage.getItem('youvin_local');
-    if (!localSrv) { st.textContent='❌ Lokaler Server nicht gesetzt – Einstellungen öffnen'; st.className='dst r'; resetBtn(); return; }
-    const res=await fetch(`${localSrv}/download`,{method:'POST',headers:{'X-API-Key':API_KEY,'Content-Type':'application/json'},body:JSON.stringify({url,user:curUser.id,format:fmt,quality,subType:curUser.subType||'free'}),signal:AbortSignal.timeout(35000)});
+    const res=await fetch(`${SERVER}/download`,{method:'POST',headers:{'X-API-Key':API_KEY,'Content-Type':'application/json'},body:JSON.stringify({url,user:curUser.id,format:fmt,quality,subType:curUser.subType||'free'}),signal:AbortSignal.timeout(300000)});
     if(!res.ok && res.headers.get('content-type')?.includes('text/html')){
-      throw new Error('Lokaler Server schläft – bitte PC-Server starten');
+      throw new Error('Server nicht erreichbar – bitte später versuchen');
     }
     const data=await res.json();
     if(data.error==='storage_full'){resetBtn();showStorageWall();return;}
@@ -1504,7 +1475,7 @@ async function startDl() {
     const poll=setInterval(async()=>{
       if(++tries>120){clearInterval(poll);st.textContent='⏱ Timeout';st.className='dst r';resetBtn();return;}
       try{
-        const jr=await fetch(`${localSrv}/job/${data.job_id}?key=${API_KEY}`);
+        const jr=await fetch(`${SERVER}/job/${data.job_id}?key=${API_KEY}`);
         const job=await jr.json();
         if(job.status==='uploading'){st.textContent='☁️ Wird hochgeladen…';}
         else if(job.status==='done'){clearInterval(poll);st.textContent='✅ '+(job.title||'Fertig');st.className='dst g';document.getElementById('dlurl').value='';await loadLib();resetBtn();}
@@ -1539,8 +1510,7 @@ function pickFile() {
     const st=document.getElementById('dst'); st.textContent='⏳ Wird hochgeladen…'; st.className='dst b';
     const fd=new FormData(); fd.append('file',safeFile); fd.append('user',curUser.id); fd.append('subType',curUser.subType||'free');
     try{
-      const localSrv2 = LOCAL || localStorage.getItem('youvin_local') || SERVER;
-      const res=await fetch(`${localSrv2}/upload`,{method:'POST',headers:{'X-API-Key':API_KEY},body:fd});
+      const res=await fetch(`${SERVER}/upload`,{method:'POST',headers:{'X-API-Key':API_KEY},body:fd});
       const d=await res.json();
       if(d.error==='storage_full'){st.textContent='';showStorageWall();return;}
       if(d.success){st.textContent='✅ '+(d.title||rawName);st.className='dst g';loadLib();}
