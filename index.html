@@ -1,14 +1,30 @@
 <!DOCTYPE html>
-<!-- YouVin v2.1 — fix: mini player bottom, preserve order, auto-next -->
+<!-- YouVin v3.1 — Hybrid R2: local download + Render cloud API -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="YouVin">
 <meta name="theme-color" content="#000000">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>YouVin</title>
+<script>
+// Auto-update: wenn neue Version auf Server, Seite neu laden
+(function(){
+  const APP_VER='3.1';
+  const stored=localStorage.getItem('youvin_app_ver');
+  if(stored && stored!==APP_VER){
+    localStorage.setItem('youvin_app_ver',APP_VER);
+    location.reload(true);
+  } else {
+    localStorage.setItem('youvin_app_ver',APP_VER);
+  }
+})();
+</script>
 <style>
 :root{
   --bg:#000;--bg2:#1C1C1E;--bg3:#2C2C2E;--bg4:#3A3A3C;
@@ -55,7 +71,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 /* APP */
 #app{display:none;position:fixed;inset:0;flex-direction:column;}
 #app.show{display:flex;}
-.ca{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--sb)+83px+70px);padding-top:var(--st);}
+.ca{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--sb)+83px+80px);padding-top:var(--st);}
 .tab{display:none;}.tab.active{display:block;}
 
 /* NAV */
@@ -229,8 +245,8 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 .ppill{padding:6px 14px;border-radius:99px;border:none;font-size:13px;font-weight:600;color:#fff;cursor:pointer;}
 
 /* MINI PLAYER — sits above the nav bar */
-#mp{position:fixed;bottom:calc(var(--sb)+56px);left:0;right:0;background:rgba(28,28,30,.97);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid var(--sep);border-radius:0;box-shadow:0 -4px 20px rgba(0,0,0,.4);z-index:49;overflow:hidden;transform:translateY(100%);opacity:0;transition:transform .35s cubic-bezier(.32,.72,0,1),opacity .25s;pointer-events:none;}
-#mp.show{transform:translateY(0);opacity:1;pointer-events:auto;}
+#mp{position:fixed;bottom:calc(env(safe-area-inset-bottom,34px) + 56px);left:0;right:0;background:rgba(28,28,30,.97);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid var(--sep);border-radius:0;box-shadow:0 -4px 20px rgba(0,0,0,.4);z-index:49;overflow:hidden;display:none;}
+#mp.show{display:block;}
 .mpm{display:flex;align-items:center;gap:12px;padding:10px 12px 6px;cursor:pointer;}
 .mpa{width:42px;height:42px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .mpa svg{width:20px;height:20px;fill:#fff;}
@@ -244,10 +260,11 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 .mc.pl svg{width:20px;height:20px;}
 .mc.cl svg{fill:var(--label3);}
 .mpp{padding:0 12px 10px;}
-.ptr{width:100%;height:3px;background:var(--bg4);border-radius:99px;cursor:pointer;transition:height .15s;}
-.ptr:active{height:5px;}
-.pf{height:100%;background:var(--accent);border-radius:99px;transition:width .1s linear;}
-.pts{display:flex;justify-content:space-between;font-size:10px;color:var(--label4);margin-top:4px;}
+.ptr{width:100%;height:4px;background:var(--bg4);border-radius:99px;cursor:pointer;position:relative;touch-action:none;}
+.pf{height:100%;background:var(--accent);border-radius:99px;position:relative;transition:width .1s linear;}
+.pf::after{content:'';position:absolute;right:-5px;top:50%;transform:translateY(-50%) scale(0);width:12px;height:12px;border-radius:50%;background:var(--accent);transition:transform .15s;}
+.ptr.scrubbing .pf::after{transform:translateY(-50%) scale(1);}
+.pts{display:flex;justify-content:space-between;font-size:10px;color:var(--label4);margin-top:6px;}
 
 /* FULL PLAYER */
 #fp{position:fixed;inset:0;display:flex;flex-direction:column;z-index:200;transform:translateY(100%);transition:transform .45s cubic-bezier(.32,.72,0,1);}
@@ -265,10 +282,11 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 .fpt{font-size:22px;font-weight:700;letter-spacing:-.3px;}
 .fpar{font-size:16px;color:rgba(255,255,255,.6);margin-top:4px;}
 .fppg{padding:0 28px;margin-bottom:8px;}
-.fptr{width:100%;height:5px;background:rgba(255,255,255,.2);border-radius:99px;cursor:pointer;transition:height .15s;}
-.fptr:active{height:8px;}
-.fpf{height:100%;background:#fff;border-radius:99px;transition:width .1s linear;}
-.fpts{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.4);margin-top:6px;}
+.fptr{width:100%;height:5px;background:rgba(255,255,255,.2);border-radius:99px;cursor:pointer;position:relative;touch-action:none;}
+.fpf{height:100%;background:#fff;border-radius:99px;position:relative;transition:width .1s linear;}
+.fpf::after{content:'';position:absolute;right:-6px;top:50%;transform:translateY(-50%) scale(0);width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .15s;}
+.fptr.scrubbing .fpf::after{transform:translateY(-50%) scale(1);}
+.fpts{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.4);margin-top:8px;}
 .fpc2{padding:0 24px 20px;display:flex;align-items:center;justify-content:space-between;}
 .fc{width:50px;height:50px;border-radius:50%;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 .fc svg{width:30px;height:30px;fill:#fff;}
@@ -282,7 +300,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 /* SHEETS */
 #pps{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;display:none;align-items:flex-end;}
 #pps.show{display:flex;}
-.ppc{width:100%;background:var(--bg2);border-radius:20px 20px 0 0;padding:20px 20px calc(var(--sb)+20px);}
+.ppc{width:100%;background:var(--bg2);border-radius:20px 20px 0 0;padding:20px 20px calc(env(safe-area-inset-bottom,34px)+40px);max-height:92dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .pph{width:36px;height:5px;background:var(--bg4);border-radius:99px;margin:0 auto 20px;}
 .pphead{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
 .pphead h2{font-size:20px;font-weight:700;}
@@ -297,7 +315,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 
 #rnsh,#plsh,#plpick{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;display:none;align-items:flex-end;}
 #rnsh.show,#plsh.show,#plpick.show{display:flex;}
-.rnc,.plc{width:100%;background:var(--bg2);border-radius:20px 20px 0 0;padding:20px 20px calc(var(--sb)+20px);}
+.rnc,.plc{width:100%;background:var(--bg2);border-radius:20px 20px 0 0;padding:20px 20px calc(env(safe-area-inset-bottom,34px)+40px);max-height:92dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .rnh{font-size:20px;font-weight:700;margin-bottom:20px;}
 .rnf{background:var(--bg3);border-radius:var(--rl);display:flex;align-items:center;padding:0 16px;margin-bottom:16px;}
 .rnf input{flex:1;padding:14px 0;background:none;border:none;outline:none;color:var(--label);font-size:17px;font-family:inherit;}
@@ -323,7 +341,6 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 .offline-warn{margin:8px 16px;background:rgba(255,159,10,.12);border:.5px solid rgba(255,159,10,.3);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--orange);display:none;}
 .chev{width:16px;height:16px;fill:var(--label4);}
 </style>
-<script src="https://www.paypal.com/sdk/js?client-id=EOPQXV8Ac7v3rOp7_5UpCL7gqLh7Msrmu33DkxBJSW3-xOAvcyRu4Gy68PXDDIeHdcEc5v_caZ5SpUED&currency=EUR" async></script>
 </head>
 <body>
 
@@ -412,13 +429,25 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
         <div class="il" style="cursor:pointer;" onclick="pickFile()">
           <div class="ir">
             <div class="ri" style="background:#FF9500;"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></div>
-            <div class="rb"><div class="rt">Vom Gerät hinzufügen</div><div class="rs">MP3, M4A, FLAC, WAV</div></div>
+            <div class="rb"><div class="rt">Vom Gerät hinzufügen</div><div class="rs">MP3, M4A, FLAC, WAV, MP4, MOV, MKV</div></div>
             <svg class="chev" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
           </div>
         </div>
       </div>
       <div class="dfw"><div class="dlb">FORMAT</div></div>
       <div class="fmtl" id="fmtl"></div>
+
+      <!-- Local server URL setting -->
+      <div style="margin:16px 16px 0;">
+        <div class="dlb">PC-SERVER (Cloudflare Tunnel)</div>
+        <div class="df" style="margin-top:6px;border-radius:var(--rl);background:var(--bg2);padding:0 14px;">
+          <input type="url" id="local-srv-inp" placeholder="https://xxxxx.trycloudflare.com"
+            style="flex:1;padding:13px 0;background:none;border:none;outline:none;color:var(--label);font-size:15px;font-family:inherit;"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            oninput="saveLocalSrv()">
+        </div>
+        <div style="font-size:12px;color:var(--label4);margin-top:6px;padding:0 4px;">Starte auf dem PC: <code style="color:var(--label3);">cloudflared tunnel --url localhost:5000</code></div>
+      </div>
     </div>
 
     <!-- SEARCH -->
@@ -574,7 +603,13 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
       <div class="ppfi"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Unbegrenzte Downloads</div>
       <div class="ppfi" id="ppfl"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Lebenslanger Zugang</div>
     </div>
-    <div id="ppbw" style="min-height:50px;margin-bottom:12px;"></div>
+    <div id="ppbw" style="margin-bottom:12px;">
+      <a id="pplnk" href="#" target="_blank" rel="noopener"
+        style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;background:#FFC439;border-radius:10px;font-size:17px;font-weight:700;color:#003087;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.3);">
+        <svg width="24" height="24" viewBox="0 0 24 24"><path fill="#003087" d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.59 3.025-2.566 6.643-8.558 6.643H9.82l-1.182 7.49h3.243c.46 0 .85-.334.922-.787l.038-.199.733-4.64.047-.256a.932.932 0 0 1 .921-.788h.58c3.757 0 6.697-1.527 7.556-5.945.36-1.847.173-3.39-.456-4.231z"/></svg>
+        Mit PayPal bezahlen
+      </a>
+    </div>
     <div style="text-align:center;font-size:12px;color:var(--label4);">🔒 Sichere Zahlung über PayPal</div>
   </div>
 </div>
@@ -610,7 +645,10 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const SERVER  = 'https://standings-toronto-facility-safer.trycloudflare.com';
+// Cloud server (Render) — library, delete, rename, reorder
+const SERVER  = 'https://youvin-api.onrender.com';
+// Local server (your PC via Cloudflare Tunnel) — download, upload
+let   LOCAL   = localStorage.getItem('youvin_local') || '';
 const API_KEY = 'youvin-secret-2024';
 const FMTS = [
   {id:'mp3-320',l:'MP3 · 320 kbps'},{id:'mp3-128',l:'MP3 · 128 kbps'},
@@ -680,7 +718,7 @@ function showStorageWall() {
   const sheet = document.createElement('div');
   sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;display:flex;align-items:flex-end;';
   sheet.innerHTML = `
-    <div style="width:100%;background:var(--bg2);border-radius:20px 20px 0 0;padding:28px 20px calc(env(safe-area-inset-bottom,34px)+20px);text-align:center;">
+    <div style="width:100%;background:var(--bg2);border-radius:20px 20px 0 0;padding:28px 20px calc(env(safe-area-inset-bottom,34px)+40px);text-align:center;max-height:92dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
       <div style="width:60px;height:60px;background:var(--orange);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.35C18 2.53 15.47 0 12.35 0c-1.7 0-3.23.72-4.35 1.85L12 6H8.77l-1.5-1.5L4.46 7.3 6 8.77V12L1.84 16.16C1.32 17.11 1 18.22 1 19.35 1 21.87 3.13 24 5.65 24c1.13 0 2.24-.32 3.19-.84L12 20l3.16 3.16C16.11 23.68 17.22 24 18.35 24 20.87 24 23 21.87 23 19.35c0-1.13-.32-2.24-.84-3.19L20 14V6z"/></svg>
       </div>
@@ -751,6 +789,7 @@ function showApp() {
                       '100 MB kostenloser Speicher';
   loadPlaylists();
   loadLib();
+  initLocalSrv();
 }
 
 function goTab(id) {
@@ -1212,12 +1251,36 @@ async function playS(idx, plId) {
   else curQueue = null;
   const s = songs[idx];
   // play directly via URL — no pre-fetch needed
-  aud.src=`${SERVER}/play/${curUser.id}/${encodeURIComponent(s.filename)}?key=${API_KEY}`;
+  // Play directly from R2 (no proxy needed)
+  aud.src = s.url || `${SERVER}/play/${curUser.id}/${encodeURIComponent(s.filename)}?key=${API_KEY}`;
   try { await aud.play(); } catch(e) { console.warn('play error',e); }
   document.getElementById('mptit').textContent = s.title;
   document.getElementById('mpsubt').textContent = s.ext?s.ext.toUpperCase():'—';
   document.getElementById('fptit').textContent  = s.title;
   document.getElementById('mp').classList.add('show');
+  // Media Session API — enables headphone buttons + lock screen controls
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: s.title || s.filename,
+      artist: 'YouVin',
+      album: 'YouVin Music'
+    });
+    navigator.mediaSession.setActionHandler('play', () => { aud.play(); updIco(); });
+    navigator.mediaSession.setActionHandler('pause', () => { aud.pause(); updIco(); });
+    navigator.mediaSession.setActionHandler('previoustrack', () => prevS());
+    navigator.mediaSession.setActionHandler('nexttrack', () => nextInQueue());
+    navigator.mediaSession.setActionHandler('seekbackward', (d)=>{
+      aud.currentTime=Math.max(0,aud.currentTime-(d.seekOffset||10));
+      updProg();
+    });
+    navigator.mediaSession.setActionHandler('seekforward', (d)=>{
+      aud.currentTime=Math.min(aud.duration||0,aud.currentTime+(d.seekOffset||10));
+      updProg();
+    });
+    navigator.mediaSession.setActionHandler('seekto', (d)=>{
+      if(d.seekTime!=null){ aud.currentTime=d.seekTime; updProg(); }
+    });
+  }
   rerender();
 }
 
@@ -1254,16 +1317,26 @@ function updIco() {
   const ico = aud.paused ? '<path d="M8 5v14l11-7z"/>' : '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
   document.getElementById('mpico').innerHTML = ico;
   document.getElementById('fpico').innerHTML = ico;
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.playbackState = aud.paused ? 'paused' : 'playing';
+    if(!isNaN(aud.duration)&&aud.duration>0){
+      try{navigator.mediaSession.setPositionState({duration:aud.duration,playbackRate:aud.playbackRate,position:aud.currentTime});}catch(e){}
+    }
+  }
 }
-function onTime() {
-  if (!aud.duration) return;
-  const pct = (aud.currentTime/aud.duration)*100;
-  document.getElementById('mpf').style.width = pct+'%';
-  document.getElementById('fpf').style.width = pct+'%';
-  const c = fmt(aud.currentTime);
-  document.getElementById('mpcur').textContent = c;
-  document.getElementById('fpcur').textContent = c;
+function updProg(){
+  if(!aud.duration)return;
+  const pct=(aud.currentTime/aud.duration)*100;
+  document.getElementById('mpf').style.width=pct+'%';
+  document.getElementById('fpf').style.width=pct+'%';
+  const c=fmt(aud.currentTime);
+  document.getElementById('mpcur').textContent=c;
+  document.getElementById('fpcur').textContent=c;
+  if('mediaSession' in navigator&&!isNaN(aud.duration)&&aud.duration>0){
+    try{navigator.mediaSession.setPositionState({duration:aud.duration,playbackRate:aud.playbackRate||1,position:Math.min(aud.currentTime,aud.duration)});}catch(e){}
+  }
 }
+function onTime(){updProg();}
 function onMeta() {
   const d = fmt(aud.duration);
   document.getElementById('mpdur').textContent = d;
@@ -1287,6 +1360,7 @@ function setupSeek(id) {
   function startScrub(clientX) {
     if (!aud.duration) return;
     scrubbing = true;
+    el.classList.add('scrubbing');
     aud.currentTime = getPct(clientX) * aud.duration;
     updateScrubUI(getPct(clientX));
   }
@@ -1303,6 +1377,7 @@ function setupSeek(id) {
     aud.currentTime = pct * aud.duration;
     updateScrubUI(pct);
     scrubbing = false;
+    el.classList.remove('scrubbing');
   }
 
   function updateScrubUI(pct) {
@@ -1389,6 +1464,19 @@ function buildFmts() {
 function pickFmt(id) { selFmt=id; buildFmts(); }
 function clrSt() { const s=document.getElementById('dst'); s.textContent=''; s.className='dst'; }
 
+// ── LOCAL SERVER SETTING ──────────────────────────────────────────────────────
+function saveLocalSrv() {
+  const v = document.getElementById('local-srv-inp').value.trim().replace(/\/+$/, '');
+  LOCAL = v;
+  localStorage.setItem('youvin_local', v);
+}
+function initLocalSrv() {
+  const saved = localStorage.getItem('youvin_local') || '';
+  LOCAL = saved;
+  const inp = document.getElementById('local-srv-inp');
+  if (inp) inp.value = saved;
+}
+
 async function startDl() {
   const url=document.getElementById('dlurl').value.trim();
   const st=document.getElementById('dst'), btn=document.getElementById('dbtn');
@@ -1402,9 +1490,11 @@ async function startDl() {
   btn.disabled=true; btn.innerHTML='<span class="spin"></span> Wird gestartet…';
   st.textContent='⏳ Server wird gestartet… (bis 30s)'; st.className='dst b';
   try {
-    const res=await fetch(`${SERVER}/download`,{method:'POST',headers:hdrs(),body:JSON.stringify({url,user:curUser.id,format:fmt,quality,subType:curUser.subType||'free'}),signal:AbortSignal.timeout(35000)});
+    const localSrv = LOCAL || localStorage.getItem('youvin_local');
+    if (!localSrv) { st.textContent='❌ Lokaler Server nicht gesetzt – Einstellungen öffnen'; st.className='dst r'; resetBtn(); return; }
+    const res=await fetch(`${localSrv}/download`,{method:'POST',headers:{'X-API-Key':API_KEY,'Content-Type':'application/json'},body:JSON.stringify({url,user:curUser.id,format:fmt,quality,subType:curUser.subType||'free'}),signal:AbortSignal.timeout(35000)});
     if(!res.ok && res.headers.get('content-type')?.includes('text/html')){
-      throw new Error('Server schläft noch – bitte erneut versuchen');
+      throw new Error('Lokaler Server schläft – bitte PC-Server starten');
     }
     const data=await res.json();
     if(data.error==='storage_full'){resetBtn();showStorageWall();return;}
@@ -1414,7 +1504,7 @@ async function startDl() {
     const poll=setInterval(async()=>{
       if(++tries>120){clearInterval(poll);st.textContent='⏱ Timeout';st.className='dst r';resetBtn();return;}
       try{
-        const jr=await fetch(`${SERVER}/job/${data.job_id}?key=${API_KEY}`);
+        const jr=await fetch(`${localSrv}/job/${data.job_id}?key=${API_KEY}`);
         const job=await jr.json();
         if(job.status==='uploading'){st.textContent='☁️ Wird hochgeladen…';}
         else if(job.status==='done'){clearInterval(poll);st.textContent='✅ '+(job.title||'Fertig');st.className='dst g';document.getElementById('dlurl').value='';await loadLib();resetBtn();}
@@ -1429,18 +1519,33 @@ function resetBtn() {
 }
 function pickFile() {
   if (!checkStorageLimit()) return;
-  const inp=document.createElement('input'); inp.type='file'; inp.accept='.mp3,.m4a,.flac,.wav,.ogg';
+  // iOS Safari: input muss im DOM sein bevor .click() aufgerufen wird
+  let inp=document.getElementById('_fileInp');
+  if(!inp){
+    inp=document.createElement('input');
+    inp.id='_fileInp'; inp.type='file';
+    inp.accept='.mp3,.m4a,.flac,.wav,.ogg,.mp4,.m4v,.mov,.mkv,.webm,.avi';
+    inp.style.cssText='position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;';
+    document.body.appendChild(inp);
+  }
+  // reset damit onchange auch bei gleichem File feuert
+  inp.value='';
   inp.onchange=async e=>{
     const f=e.target.files[0]; if(!f)return;
+    // iOS Fotomediathek gibt manchmal keinen Namen — Fallback generieren
+    const ext=(f.name&&f.name.includes('.'))?f.name.split('.').pop():(f.type?f.type.split('/').pop().replace('quicktime','mov'):'mp4');
+    const rawName=(f.name&&f.name!=='undefined'&&f.name.trim()&&f.name!=='blob')?f.name:('upload_'+Date.now()+'.'+ext);
+    const safeFile=new File([f],rawName,{type:f.type||'audio/mpeg'});
     const st=document.getElementById('dst'); st.textContent='⏳ Wird hochgeladen…'; st.className='dst b';
-    const fd=new FormData(); fd.append('file',f); fd.append('user',curUser.id); fd.append('subType',curUser.subType||'free');
+    const fd=new FormData(); fd.append('file',safeFile); fd.append('user',curUser.id); fd.append('subType',curUser.subType||'free');
     try{
-      const res=await fetch(`${SERVER}/upload`,{method:'POST',headers:{'X-API-Key':API_KEY},body:fd});
+      const localSrv2 = LOCAL || localStorage.getItem('youvin_local') || SERVER;
+      const res=await fetch(`${localSrv2}/upload`,{method:'POST',headers:{'X-API-Key':API_KEY},body:fd});
       const d=await res.json();
       if(d.error==='storage_full'){st.textContent='';showStorageWall();return;}
-      if(d.success){st.textContent='✅ '+f.name;st.className='dst g';loadLib();}
-      else{st.textContent='❌ '+d.error;st.className='dst r';}
-    }catch{st.textContent='❌ Upload-Fehler';st.className='dst r';}
+      if(d.success){st.textContent='✅ '+(d.title||rawName);st.className='dst g';loadLib();}
+      else{st.textContent='❌ '+(d.error||'Fehler');st.className='dst r';}
+    }catch(err){st.textContent='❌ Upload-Fehler: '+err.message;st.className='dst r';}
   };
   inp.click();
 }
@@ -1461,6 +1566,10 @@ function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 function closeAllSwipes(){document.querySelectorAll('.sw-row').forEach(r=>r.style.transform='translateX(0)');document.querySelectorAll('.sw-actions').forEach(a=>a.style.width='0');}
 
 // ── PAYPAL ────────────────────────────────────────────────────────────────────
+// PayPal.me links — Zahlung läuft über PayPal.me, danach manuell aktivieren
+const PP_YEARLY_URL  = 'https://www.paypal.com/paypalme/evin7is7/10EUR';
+const PP_LIFETIME_URL= 'https://www.paypal.com/paypalme/evin7is7/20EUR';
+
 function showPP(plan) {
   curPlan=plan; const y=plan==='yearly';
   document.getElementById('pptit').textContent=y?'YouVin Yearly':'YouVin Lifetime';
@@ -1468,21 +1577,12 @@ function showPP(plan) {
   document.getElementById('ppprice').style.color=y?'var(--blue)':'var(--accent)';
   document.getElementById('ppperiod').textContent=y?'pro Jahr · Unbegrenzter Speicher':'einmalige Zahlung · Unbegrenzter Speicher';
   document.getElementById('ppfl').style.display=y?'none':'flex';
+  // رابط PayPal المباشر
+  document.getElementById('pplnk').href=y?PP_YEARLY_URL:PP_LIFETIME_URL;
   document.getElementById('pps').classList.add('show');
-  setTimeout(renderPP,200);
 }
 function closePP(e){if(!e||e.target===document.getElementById('pps'))document.getElementById('pps').classList.remove('show');}
-function renderPP(){
-  const c=document.getElementById('ppbw'); c.innerHTML='';
-  if(typeof paypal==='undefined'){c.innerHTML='<div style="color:var(--accent);padding:16px;text-align:center;">PayPal wird geladen…</div>';return;}
-  const amount=curPlan==='yearly'?'10.00':'20.00';
-  paypal.Buttons({
-    style:{layout:'vertical',color:'gold',shape:'rect',label:'paypal'},
-    createOrder:(d,a)=>a.order.create({purchase_units:[{amount:{value:amount,currency_code:'EUR'}}]}),
-    onApprove:(d,a)=>a.order.capture().then(()=>{curUser.subType=curPlan;localStorage.setItem('youvin_user',JSON.stringify(curUser));closePP();showApp();updateStorBar();alert(curPlan==='yearly'?'✅ Yearly aktiviert! Unbegrenzter Speicher.':'✅ Lifetime aktiviert! Unbegrenzter Speicher.');}),
-    onError:()=>alert('Zahlung fehlgeschlagen.')
-  }).render('#ppbw');
-}
+function renderPP(){} // لم يعد مستخدماً
 </script>
 </body>
 </html>
