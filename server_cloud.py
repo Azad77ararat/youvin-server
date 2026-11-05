@@ -201,6 +201,21 @@ def download():
     return jsonify({'job_id': job_id})
 
 # ── Upload file directly (from device) ───────────────────────────────────────
+def media_ok(path):
+    """يتحقق أن الملف صوت/فيديو قابل للتشغيل عبر ffprobe. إن لم يكن ffprobe متوفراً لا نرفض."""
+    try:
+        r = subprocess.run(
+            ['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path],
+            capture_output=True, text=True, timeout=60
+        )
+        if r.returncode != 0:
+            return False
+        return float(r.stdout.strip() or 0) > 0
+    except FileNotFoundError:
+        return True
+    except Exception:
+        return False
+
 @app.route('/upload', methods=['POST'])
 def upload():
     if not auth_ok():
@@ -219,13 +234,22 @@ def upload():
     r2_key   = f'songs/{user}/{filename}'
     ct       = get_content_type(filename)
 
+    tmp_dir  = tempfile.mkdtemp(prefix='up_')
+    tmp_path = os.path.join(tmp_dir, filename)
     try:
-        s3.upload_fileobj(f, R2_BUCKET, r2_key, ExtraArgs={'ContentType': ct})
+        f.save(tmp_path)
+        if os.path.getsize(tmp_path) == 0:
+            return jsonify({'error': 'empty_file'}), 400
+        if not media_ok(tmp_path):
+            return jsonify({'error': 'invalid_media'}), 400
+        s3.upload_file(tmp_path, R2_BUCKET, r2_key, ExtraArgs={'ContentType': ct})
         url = song_url(r2_key)
         title = filename.rsplit('.', 1)[0].replace('_', ' ')
         return jsonify({'ok': True, 'url': url, 'filename': filename, 'title': title})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
 # ── Job status ────────────────────────────────────────────────────────────────
 @app.route('/job/<job_id>')
