@@ -2,4 +2,4 @@ flask
 flask-cors
 boto3
 gunicorn
-yt-dlp
+yt-dlp>=2024.11.4
