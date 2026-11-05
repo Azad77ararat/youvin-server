@@ -759,11 +759,7 @@ async function doAuth() {
   const pw = document.getElementById('ip').value.trim();
   if (!em || !pw) { document.getElementById('aerr').textContent='E-Mail und Passwort eingeben'; return; }
   document.getElementById('asub').textContent = '…';
-  if (em==='admin@youvin.app' && pw==='YouVin2024!') {
-    curUser = {email:em, id:'admin', subType:'admin'};
-  } else {
-    curUser = {email:em, id:btoa(em).replace(/[^a-z0-9]/gi,'').slice(0,16), subType:'free'};
-  }
+  curUser = {email:em, id:btoa(em).replace(/[^a-z0-9]/gi,'').slice(0,16), subType:'free'};
   localStorage.setItem('youvin_user', JSON.stringify(curUser));
   document.getElementById('auth').classList.remove('show');
   showApp();
@@ -804,6 +800,10 @@ async function loadLib() {
   try {
     const res  = await fetch(`${SERVER}/library?user=${curUser.id}&key=${API_KEY}`, {signal:AbortSignal.timeout(35000)});
     const data = await res.json();
+    if (data.subType && curUser) {
+      curUser.subType = data.subType;
+      localStorage.setItem('youvin_user', JSON.stringify(curUser));
+    }
     let raw = data.files || data.songs || [];
     if (raw.length && typeof raw[0]==='string') {
       raw = raw.map(f => ({filename:f, title:f.replace(/\.[^.]+$/,''), ext:f.split('.').pop().toLowerCase(), size:0}));

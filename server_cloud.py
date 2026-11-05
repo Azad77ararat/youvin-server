@@ -53,6 +53,12 @@ def song_url(key):
         ExpiresIn=604800
     )
 
+# ── Premium: يقرره السيرفر فقط (Render → Environment → PREMIUM_IDS) ───────────
+PREMIUM_IDS = {x.strip() for x in os.environ.get('PREMIUM_IDS', '').split(',') if x.strip()}
+
+def user_sub(user):
+    return 'lifetime' if user in PREMIUM_IDS else 'free'
+
 app = Flask(__name__)
 CORS(app)
 
@@ -162,7 +168,7 @@ def download():
     user    = data.get('user', 'unknown')
     fmt     = data.get('format', 'mp3')
     quality = data.get('quality', '320')
-    sub     = data.get('subType', 'free')
+    sub     = user_sub(user)
 
     if not url:
         return jsonify({'error': 'no url'}), 400
@@ -221,7 +227,7 @@ def upload():
     if not auth_ok():
         return jsonify({'error': 'unauthorized'}), 401
     user = request.form.get('user', 'unknown')
-    sub  = request.form.get('subType', 'free')
+    sub  = user_sub(user)
     f    = request.files.get('file')
     if not f:
         return jsonify({'error': 'no file'}), 400
@@ -307,7 +313,7 @@ def library():
             'percent': round(total_bytes / limit_bytes * 100, 1) if limit_bytes > 0 else 0
         }
 
-        return jsonify({'songs': songs, 'storage': storage})
+        return jsonify({'songs': songs, 'storage': storage, 'subType': user_sub(user)})
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
