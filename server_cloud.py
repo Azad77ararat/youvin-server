@@ -6,10 +6,17 @@ YouVin Cloud Server v4.0 — Render.com
 - الأغاني تُشغَّل مباشرة من R2
 """
 
-import os, re, json, threading, uuid, time, tempfile, shutil
+import os, re, json, threading, uuid, time, tempfile, shutil, subprocess, sys
 import boto3
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+
+# Auto-update yt-dlp on startup
+try:
+    subprocess.run([sys.executable, '-m', 'pip', 'install', '-U', 'yt-dlp', '--quiet'], timeout=60)
+    print('[YouVin] yt-dlp updated successfully')
+except Exception as e:
+    print(f'[YouVin] yt-dlp update skipped: {e}')
 
 # ── R2 Config ─────────────────────────────────────────────────────────────────
 R2_ACCOUNT_ID = os.environ.get('R2_ACCOUNT_ID', '8143bcf45fca20e95fb4d43f3e46c474')
