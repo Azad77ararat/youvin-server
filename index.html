@@ -100,8 +100,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 
 /* ── DRAG & DROP SONG ROW ──────────────────────────────────────── */
 .il{margin:0 16px 24px;background:none;}
-.sw-wrap{position:relative;overflow:hidden;border:1.5px solid var(--accent);border-radius:14px;margin-bottom:10px;touch-action:pan-y;}
-.sw-row{border-radius:12px;}
+.sw-wrap{position:relative;overflow:hidden;border-radius:14px;margin-bottom:8px;touch-action:pan-y;}
 .sw-wrap.drag-over{background:rgba(255,45,85,.12);}
 .sw-wrap.dragging{opacity:.4;}
 
@@ -121,7 +120,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 .drag-handle:active{cursor:grabbing;}
 .drag-handle svg{width:18px;height:18px;fill:var(--label4);}
 
-.ri{width:44px;height:44px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ri{width:44px;height:44px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .ri svg{width:22px;height:22px;fill:#fff;}
 .ri.acc{background:var(--accent);}
 .rb{flex:1;min-width:0;cursor:pointer;}
