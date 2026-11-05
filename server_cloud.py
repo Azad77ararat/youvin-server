@@ -1,5 +1,5 @@
 """
-YouVin Cloud Server v4.0 — Render.com
+YouVin Cloud Server v4.1 — Render.com
 - /library, /delete, /rename, /reorder  — يقرأ/يعدّل R2
 - /download  — يحمّل من YouTube على Render ويرفع إلى R2
 - /job/<id>  — حالة التحميل
@@ -11,12 +11,20 @@ import boto3
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-# Auto-update yt-dlp on startup
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# ── Make pip-installed tools (deno, yt-dlp) visible on PATH ──────────────────
+os.environ['PATH'] = os.path.dirname(sys.executable) + os.pathsep + os.environ.get('PATH', '')
+
+# ── Keep yt-dlp + JS challenge solver up to date on startup ──────────────────
 try:
-    subprocess.run([sys.executable, '-m', 'pip', 'install', '-U', 'yt-dlp', '--quiet'], timeout=60)
-    print('[YouVin] yt-dlp updated successfully')
+    subprocess.run(
+        [sys.executable, '-m', 'pip', 'install', '-U', 'yt-dlp', 'yt-dlp-ejs', 'deno', '--quiet'],
+        timeout=180
+    )
+    print('[YouVin] yt-dlp / yt-dlp-ejs / deno updated')
 except Exception as e:
-    print(f'[YouVin] yt-dlp update skipped: {e}')
+    print(f'[YouVin] update skipped: {e}')
 
 # ── R2 Config ─────────────────────────────────────────────────────────────────
 R2_ACCOUNT_ID = os.environ.get('R2_ACCOUNT_ID', '8143bcf45fca20e95fb4d43f3e46c474')
@@ -66,10 +74,71 @@ def get_user_storage(user):
     except:
         return 0
 
-# ── Ping ──────────────────────────────────────────────────────────────────────
-@app.route('/ping')
-def ping():
-    return jsonify({'ok': True, 'server': 'YouVin Cloud v4.0 (Render)'})
+# ── YouTube download (yt-dlp) ─────────────────────────────────────────────────
+def build_ydl_opts(fmt, quality, out_dir, mode):
+    """
+    mode 'mobile'  : android/ios clients, بدون cookies (تعمل غالباً مع السيرفرات)
+    mode 'cookies' : web clients مع youtube_cookies.txt (احتياطي)
+    """
+    opts = {
+        'outtmpl': os.path.join(out_dir, '%(title)s.%(ext)s'),
+        'noplaylist': True,
+        'quiet': True,
+    }
+
+    if fmt == 'mp4':
+        opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
+        opts['merge_output_format'] = 'mp4'
+    else:
+        audio_fmt = {'mp3': 'mp3', 'm4a': 'm4a', 'flac': 'flac'}.get(fmt, 'mp3')
+        opts['format'] = 'bestaudio/best'
+        opts['postprocessors'] = [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': audio_fmt,
+            'preferredquality': '0',
+        }]
+
+    if mode == 'mobile':
+        opts['extractor_args'] = {'youtube': {'player_client': ['android', 'ios']}}
+    else:
+        cookies_path = os.environ.get('COOKIES_FILE', os.path.join(BASE_DIR, 'youtube_cookies.txt'))
+        if not os.path.exists(cookies_path):
+            raise Exception('no cookies file')
+        opts['cookiefile'] = cookies_path
+        opts['extractor_args'] = {'youtube': {'player_client': ['web_safari', 'web']}}
+
+    return opts
+
+def run_yt_dlp(url, fmt, quality, base_tmp):
+    """يجرّب الأوضاع بالترتيب ويعيد (title, local_file) عند النجاح."""
+    import yt_dlp
+
+    cookies_path = os.environ.get('COOKIES_FILE', os.path.join(BASE_DIR, 'youtube_cookies.txt'))
+    modes = ['mobile']
+    if os.path.exists(cookies_path):
+        modes.append('cookies')
+
+    errors = []
+    for mode in modes:
+        attempt_dir = tempfile.mkdtemp(prefix=f'{mode}_', dir=base_tmp)
+        try:
+            opts = build_ydl_opts(fmt, quality, attempt_dir, mode)
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                title = info.get('title', 'Unknown')
+
+            candidates = [
+                os.path.join(attempt_dir, f) for f in os.listdir(attempt_dir)
+                if not f.endswith(('.part', '.ytdl', '.temp'))
+            ]
+            if candidates:
+                local_file = max(candidates, key=os.path.getsize)
+                return title, local_file
+            errors.append(f'{mode}: no file produced')
+        except Exception as e:
+            errors.append(f'{mode}: {e}')
+
+    raise Exception(' | '.join(errors) or 'download failed')
 
 # ── Download from YouTube ─────────────────────────────────────────────────────
 @app.route('/download', methods=['POST'])
@@ -96,79 +165,26 @@ def download():
     jobs[job_id] = {'status': 'pending', 'title': None, 'url': None, 'error': None}
 
     def do_download():
+        base_tmp = tempfile.mkdtemp(prefix=f'youvin_{job_id}_')
         try:
-            import yt_dlp
-
-            tmp_dir = tempfile.mkdtemp(prefix=f'youvin_{job_id}_')
-
-            # cookies file — same directory as this script
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            cookies_path = os.environ.get('COOKIES_FILE', os.path.join(base_dir, 'youtube_cookies.txt'))
-            if not os.path.exists(cookies_path):
-                cookies_path = ''
-
-            if fmt == 'mp4':
-                ydl_opts = {
-                    'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-                    'outtmpl': os.path.join(tmp_dir, '%(title)s.%(ext)s'),
-                    'merge_output_format': 'mp4',
-                    'noplaylist': True,
-                    'quiet': True,
-                }
-            else:
-                audio_fmt = {'mp3': 'mp3', 'm4a': 'm4a', 'flac': 'flac'}.get(fmt, 'mp3')
-                ydl_opts = {
-                    'format': 'bestaudio/best',
-                    'outtmpl': os.path.join(tmp_dir, '%(title)s.%(ext)s'),
-                    'postprocessors': [{
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': audio_fmt,
-                        'preferredquality': '0',
-                    }],
-                    'noplaylist': True,
-                    'quiet': True,
-                    'extractor_args': {'youtube': {'player_client': ['android', 'ios', 'web']}},
-                }
-
-            if cookies_path:
-                ydl_opts['cookiefile'] = cookies_path
-
             jobs[job_id]['status'] = 'downloading'
+            title, local_file = run_yt_dlp(url, fmt, quality, base_tmp)
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                title = info.get('title', 'Unknown')
-
-            files = os.listdir(tmp_dir)
-            if not files:
-                raise Exception('Download failed — no file')
-
-            local_file = os.path.join(tmp_dir, files[0])
-            filename   = files[0]
-            safe       = re.sub(r'[^\w\-. ]', '_', filename)
-            r2_key     = f'songs/{user}/{safe}'
-            ct         = get_content_type(safe)
+            filename = os.path.basename(local_file)
+            safe     = re.sub(r'[^\w\-. ]', '_', filename)
+            r2_key   = f'songs/{user}/{safe}'
+            ct       = get_content_type(safe)
 
             jobs[job_id]['status'] = 'uploading'
-
-            s3.upload_file(
-                local_file, R2_BUCKET, r2_key,
-                ExtraArgs={'ContentType': ct}
-            )
+            s3.upload_file(local_file, R2_BUCKET, r2_key, ExtraArgs={'ContentType': ct})
 
             r2_url = f'{R2_PUBLIC_URL}/{r2_key}'
-
-            # Cleanup
-            try:
-                os.remove(local_file)
-                os.rmdir(tmp_dir)
-            except:
-                pass
-
             jobs[job_id].update({'status': 'done', 'title': title, 'url': r2_url, 'filename': safe})
 
         except Exception as e:
             jobs[job_id].update({'status': 'error', 'error': str(e)})
+        finally:
+            shutil.rmtree(base_tmp, ignore_errors=True)
 
     threading.Thread(target=do_download, daemon=True).start()
     return jsonify({'job_id': job_id})
@@ -315,5 +331,5 @@ def reorder():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    print(f'YouVin Cloud v4.0 (Render) — port {port}')
+    print(f'YouVin Cloud v4.1 (Render) — port {port}')
     app.run(host='0.0.0.0', port=port, debug=False)
