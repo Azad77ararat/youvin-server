@@ -94,9 +94,10 @@ def download():
 
             tmp_dir = tempfile.mkdtemp(prefix=f'youvin_{job_id}_')
 
-            # cookies file path (upload to Render via env or file)
-            cookies_path = os.environ.get('COOKIES_FILE', '')
-            if cookies_path and not os.path.exists(cookies_path):
+            # cookies file — same directory as this script
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            cookies_path = os.environ.get('COOKIES_FILE', os.path.join(base_dir, 'youtube_cookies.txt'))
+            if not os.path.exists(cookies_path):
                 cookies_path = ''
 
             if fmt == 'mp4':
