@@ -118,7 +118,7 @@ def download():
             else:
                 audio_fmt = {'mp3': 'mp3', 'm4a': 'm4a', 'flac': 'flac'}.get(fmt, 'mp3')
                 ydl_opts = {
-                    'format': 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
+                    'format': 'bestaudio/best',
                     'outtmpl': os.path.join(tmp_dir, '%(title)s.%(ext)s'),
                     'postprocessors': [{
                         'key': 'FFmpegExtractAudio',
@@ -128,6 +128,7 @@ def download():
                     'noplaylist': True,
                     'quiet': True,
                     'no_warnings': True,
+                    'extractor_args': {'youtube': {'player_client': ['android', 'ios', 'web']}},
                 }
 
             if cookies_path:
