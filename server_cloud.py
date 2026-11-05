@@ -109,7 +109,6 @@ def download():
                     'quiet': True,
                 }
             else:
-                bitrate  = quality if sub != 'free' else quality
                 audio_fmt = {'mp3': 'mp3', 'm4a': 'm4a', 'flac': 'flac'}.get(fmt, 'mp3')
                 ydl_opts = {
                     'format': 'bestaudio/best',
@@ -117,7 +116,7 @@ def download():
                     'postprocessors': [{
                         'key': 'FFmpegExtractAudio',
                         'preferredcodec': audio_fmt,
-                        'preferredquality': bitrate,
+                        'preferredquality': '0',
                     }],
                     'noplaylist': True,
                     'quiet': True,
