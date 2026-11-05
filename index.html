@@ -1261,14 +1261,6 @@ async function playS(idx, plId) {
     navigator.mediaSession.setActionHandler('pause', () => { aud.pause(); updIco(); });
     navigator.mediaSession.setActionHandler('previoustrack', () => prevS());
     navigator.mediaSession.setActionHandler('nexttrack', () => nextInQueue());
-    navigator.mediaSession.setActionHandler('seekbackward', (d)=>{
-      aud.currentTime=Math.max(0,aud.currentTime-(d.seekOffset||10));
-      updProg();
-    });
-    navigator.mediaSession.setActionHandler('seekforward', (d)=>{
-      aud.currentTime=Math.min(aud.duration||0,aud.currentTime+(d.seekOffset||10));
-      updProg();
-    });
     navigator.mediaSession.setActionHandler('seekto', (d)=>{
       if(d.seekTime!=null){ aud.currentTime=d.seekTime; updProg(); }
     });
