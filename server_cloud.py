@@ -45,6 +45,14 @@ s3 = boto3.client(
     region_name='auto'
 )
 
+def song_url(key):
+    """رابط موقّع صالح 7 أيام — يعمل حتى لو الـ bucket غير عام"""
+    return s3.generate_presigned_url(
+        'get_object',
+        Params={'Bucket': R2_BUCKET, 'Key': key},
+        ExpiresIn=604800
+    )
+
 app = Flask(__name__)
 CORS(app)
 
@@ -84,6 +92,9 @@ def build_ydl_opts(fmt, quality, out_dir, mode):
         'outtmpl': os.path.join(out_dir, '%(title)s.%(ext)s'),
         'noplaylist': True,
         'quiet': True,
+        'retries': 10,
+        'fragment_retries': 10,
+        'socket_timeout': 30,
     }
 
     if fmt == 'mp4':
@@ -178,7 +189,7 @@ def download():
             jobs[job_id]['status'] = 'uploading'
             s3.upload_file(local_file, R2_BUCKET, r2_key, ExtraArgs={'ContentType': ct})
 
-            r2_url = f'{R2_PUBLIC_URL}/{r2_key}'
+            r2_url = song_url(r2_key)
             jobs[job_id].update({'status': 'done', 'title': title, 'url': r2_url, 'filename': safe})
 
         except Exception as e:
@@ -210,7 +221,7 @@ def upload():
 
     try:
         s3.upload_fileobj(f, R2_BUCKET, r2_key, ExtraArgs={'ContentType': ct})
-        url = f'{R2_PUBLIC_URL}/{r2_key}'
+        url = song_url(r2_key)
         title = filename.rsplit('.', 1)[0].replace('_', ' ')
         return jsonify({'ok': True, 'url': url, 'filename': filename, 'title': title})
     except Exception as e:
@@ -251,7 +262,7 @@ def library():
             total_bytes += size
             ext   = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'mp3'
             title = filename.rsplit('.', 1)[0].replace('_', ' ')
-            url   = f'{R2_PUBLIC_URL}/{key}'
+            url   = song_url(key)
             songs.append({'filename': filename, 'title': title, 'url': url, 'size': size, 'ext': ext})
 
         songs.sort(key=lambda s: s['filename'])
@@ -306,7 +317,7 @@ def rename():
     try:
         s3.copy_object(Bucket=R2_BUCKET, CopySource={'Bucket': R2_BUCKET, 'Key': old_key}, Key=new_key)
         s3.delete_object(Bucket=R2_BUCKET, Key=old_key)
-        return jsonify({'ok': True, 'filename': new_safe, 'url': f'{R2_PUBLIC_URL}/{new_key}'})
+        return jsonify({'ok': True, 'filename': new_safe, 'url': song_url(new_key)})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

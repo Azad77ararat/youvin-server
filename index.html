@@ -272,8 +272,10 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 .fpbk{position:absolute;inset:0;background:#1A1A1A;}
 .fpb{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;}
 .fpn{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--st)+12px) 24px 0;}
-.fpdb{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.12);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-.fpdb svg{width:18px;height:18px;fill:#fff;}
+.fpdb{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.18);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.fpdb svg{width:22px;height:22px;fill:#fff;}
+.fpgrab{width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.4);margin:calc(var(--st) - 20px) auto 0;flex-shrink:0;}
+.fpn{padding-top:12px !important;}
 .fpnl{font-size:13px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;}
 .fpaw{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;}
 .fpa{width:min(300px,calc(100vw - 64px));aspect-ratio:1;border-radius:22px;background:var(--bg3);display:flex;align-items:center;justify-content:center;box-shadow:0 24px 80px rgba(0,0,0,.6);}
@@ -557,6 +559,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 <div id="fp">
   <div class="fpbk"></div>
   <div class="fpb">
+    <div class="fpgrab" title="اسحب للأسفل للإغلاق"></div>
     <div class="fpn">
       <button class="fpdb" onclick="closeFP()"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
       <span class="fpnl">Wird abgespielt</span>
@@ -1293,6 +1296,28 @@ function nextInQueue() {
 }
 function nextS() { nextInQueue(); }
 
+// ── Swipe down to close full player ──────────────────────────────────────────
+(function(){
+  const fp = document.getElementById('fp');
+  let y0 = null, dy = 0;
+  fp.addEventListener('touchstart', e => {
+    y0 = e.touches[0].clientY; dy = 0;
+    fp.style.transition = 'none';
+  }, {passive:true});
+  fp.addEventListener('touchmove', e => {
+    if (y0 === null) return;
+    dy = e.touches[0].clientY - y0;
+    if (dy > 0) fp.style.transform = `translateY(${dy}px)`;
+  }, {passive:true});
+  fp.addEventListener('touchend', () => {
+    if (y0 === null) return;
+    fp.style.transition = '';
+    fp.style.transform = '';
+    if (dy > 120) closeFP();
+    y0 = null;
+  });
+})();
+
 function closeP() {
   aud.pause(); aud.src=''; playing=false; curIdx=-1; curQueue=null;
   document.getElementById('mp').classList.remove('show');
@@ -1473,7 +1498,7 @@ async function startDl() {
     st.textContent='Herunterladen…'; st.className='dst b';
     let tries=0;
     const poll=setInterval(async()=>{
-      if(++tries>120){clearInterval(poll);st.textContent='⏱ Timeout';st.className='dst r';resetBtn();return;}
+      if(++tries>600){clearInterval(poll);st.textContent='⏱ Timeout';st.className='dst r';resetBtn();return;}
       try{
         const jr=await fetch(`${SERVER}/job/${data.job_id}?key=${API_KEY}`);
         const job=await jr.json();
