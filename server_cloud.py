@@ -127,7 +127,6 @@ def download():
                     }],
                     'noplaylist': True,
                     'quiet': True,
-                    'no_warnings': True,
                     'extractor_args': {'youtube': {'player_client': ['android', 'ios', 'web']}},
                 }
 
