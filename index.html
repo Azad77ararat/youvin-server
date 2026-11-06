@@ -350,6 +350,27 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 @keyframes sp{to{transform:rotate(360deg);}}
 .offline-warn{margin:8px 16px;background:rgba(255,159,10,.12);border:.5px solid rgba(255,159,10,.3);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--orange);display:none;}
 .chev{width:16px;height:16px;fill:var(--label4);}
+
+/* FULL PLAYER — iOS Now Playing layout */
+.fpgrab{display:block;width:36px;height:5px;border-radius:3px;background:rgba(255,255,255,.35);margin:calc(var(--st) - 30px) auto 0;}
+.fpiw{padding:0 28px;margin-bottom:18px;}
+.fprow{display:flex;align-items:center;gap:6px;}
+.fpti{flex:1;min-width:0;}
+.fpt{font-size:24px;font-weight:700;line-height:1.2;}
+.fpar{font-size:19px;color:rgba(255,255,255,.6);margin-top:2px;}
+.fpic{background:none;border:none;padding:6px;cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center;}
+.fpic svg{width:24px;height:24px;fill:rgba(255,255,255,.9);}
+.fpc2{padding:0 40px 14px;}
+.fc{width:70px;height:70px;}
+.fc svg{width:44px;height:44px;fill:#fff;}
+.fc.pl svg{width:58px;height:58px;fill:#fff;}
+.fpvl{padding:0 28px;margin-top:22px;}
+.fpvl svg{width:20px;height:20px;fill:rgba(255,255,255,.6);}
+.fpbt{display:flex;align-items:center;justify-content:space-between;padding:22px 36px calc(var(--sb) + 14px);}
+.fpbt .fpic svg{width:24px;height:24px;fill:rgba(255,255,255,.6);}
+.fpdev{font-size:15px;font-weight:600;color:rgba(255,255,255,.6);}
+.fpbadge{position:absolute;right:0;top:0;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;}
+.fpbadge svg{width:11px;height:11px;fill:#fff;}
 </style>
 </head>
 <body>
@@ -571,27 +592,33 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 <div id="fp">
   <div class="fpbk"></div>
   <div class="fpb">
-    <div class="fpgrab" title="اسحب للأسفل للإغلاق"></div>
-    <div class="fpn">
-      <button class="fpdb" onclick="closeFP()"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
-      <span class="fpnl">Wird abgespielt</span>
-      <button class="fpdb" onclick="playRandom()" title="Zufällig"><svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></button>
-    </div>
+    <div class="fpgrab"></div>
     <div class="fpaw"><div class="fpa"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div></div>
-    <div class="fpiw"><div class="fpt" id="fptit">—</div><div class="fpar">YouVin</div></div>
+    <div class="fpiw">
+      <div class="fprow">
+        <div class="fpti"><div class="fpt" id="fptit">—</div><div class="fpar">YouVin</div></div>
+        <button class="fpic" title="Favorit"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
+        <button class="fpic" title="Mehr"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+      </div>
+    </div>
     <div class="fppg">
       <div class="fptr" id="fptr"><div class="fpf" id="fpf" style="width:0%"></div></div>
       <div class="fpts"><span id="fpcur">0:00</span><span id="fpdur">0:00</span></div>
     </div>
     <div class="fpc2">
-      <button class="fc" onclick="prevS()"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button class="fc" onclick="prevS()"><svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
       <button class="fc pl" onclick="togPlay()"><svg viewBox="0 0 24 24" id="fpico"><path d="M8 5v14l11-7z"/></svg></button>
-      <button class="fc" onclick="nextS()"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+      <button class="fc" onclick="nextS()"><svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
     </div>
     <div class="fpvl">
       <svg viewBox="0 0 24 24"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5zm7-.17v6.34L9.83 13H7v-2h2.83L12 8.83z"/></svg>
       <div class="vtr" id="vtr"><div class="vf" id="vf"></div></div>
       <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+    </div>
+    <div class="fpbt">
+      <button class="fpic" title="Text"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM7 9h10v2H7zm6 5H7v-2h6zm4-6H7V6h10z"/></svg></button>
+      <span class="fpdev">YouVin</span>
+      <button class="fpic" title="Zufällig" onclick="playRandom()" style="position:relative"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg><span class="fpbadge"><svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></span></button>
     </div>
   </div>
 </div>
