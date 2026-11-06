@@ -33,7 +33,7 @@
   --accent:#FF2D55;--blue:#0A84FF;--green:#30D158;--orange:#FF9F0A;--red:#FF3B30;
   --fill:rgba(120,120,128,0.36);--fill2:rgba(120,120,128,0.24);--fill3:rgba(120,120,128,0.16);
   --r:13px;--rl:16px;--rx:20px;
-  --st:env(safe-area-inset-top,44px);--sb:env(safe-area-inset-bottom,34px);
+  --st:max(env(safe-area-inset-top,0px),44px);--sb:env(safe-area-inset-bottom,34px);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
@@ -207,7 +207,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 #pl-view{position:fixed;inset:0;background:var(--bg);z-index:150;transform:translateX(100%);transition:transform .35s cubic-bezier(.32,.72,0,1);}
 #pl-view.show{transform:translateX(0);}
 .plv-nav{display:flex;align-items:center;gap:12px;padding:calc(var(--st)+8px) 16px 12px;}
-.plv-back{width:34px;height:34px;border-radius:50%;background:var(--fill2);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.plv-back{display:none;width:34px;height:34px;border-radius:50%;background:var(--fill2);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 .plv-back svg{width:20px;height:20px;fill:var(--label);}
 .plv-title{font-size:18px;font-weight:700;flex:1;}
 .plv-more{width:34px;height:34px;border-radius:50%;background:var(--fill2);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;}
@@ -1065,6 +1065,28 @@ function openPlView(id) {
   renderSongs(getSongsInPl(pl), list, id);
   document.getElementById('pl-view').classList.add('show');
 }
+// ── Swipe right to go back from playlist ─────────────────────────────────────
+(function(){
+  const pv = document.getElementById('pl-view');
+  let x0 = null, dx = 0;
+  pv.addEventListener('touchstart', e => {
+    x0 = e.touches[0].clientX; dx = 0;
+    pv.style.transition = 'none';
+  }, {passive:true});
+  pv.addEventListener('touchmove', e => {
+    if (x0 === null) return;
+    dx = e.touches[0].clientX - x0;
+    if (dx > 0) pv.style.transform = `translateX(${dx}px)`;
+  }, {passive:true});
+  pv.addEventListener('touchend', () => {
+    if (x0 === null) return;
+    pv.style.transition = '';
+    pv.style.transform = '';
+    if (dx > 100) closePlView();
+    x0 = null;
+  });
+})();
+
 function closePlView() { document.getElementById('pl-view').classList.remove('show'); curPlId=null; }
 
 function plViewMore() {
