@@ -371,6 +371,24 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 .fpdev{font-size:15px;font-weight:600;color:rgba(255,255,255,.6);}
 .fpbadge{position:absolute;right:0;top:0;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;}
 .fpbadge svg{width:11px;height:11px;fill:#fff;}
+
+/* FULL PLAYER — favorites, shuffle, queue list */
+#fpfav svg{fill:rgba(255,255,255,.45);}
+#fpfav.on svg{fill:#fff;}
+#fpshuf svg{fill:rgba(255,255,255,.45);}
+#fpshuf.on{background:rgba(255,255,255,.2);border-radius:50%;}
+#fpshuf.on svg{fill:#fff;}
+.fpq{display:none;flex:1;min-height:0;overflow-y:auto;padding:12px 28px 0;}
+#fp.qmode .fpq{display:block;}
+#fp.qmode .fpaw{display:none;}
+.fpqh{font-size:20px;font-weight:700;margin:4px 0 12px;}
+.fpqr{display:flex;align-items:center;gap:14px;padding:6px 0;cursor:pointer;}
+.fpqth{width:52px;height:52px;border-radius:10px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;flex:none;}
+.fpqth svg{width:22px;height:22px;fill:rgba(255,255,255,.45);}
+.fpqtx{flex:1;min-width:0;}
+.fpqt{font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fpqr.cur .fpqt{color:#ff2d55;}
+.fpqs{font-size:13px;color:rgba(255,255,255,.5);margin-top:2px;}
 </style>
 </head>
 <body>
@@ -597,10 +615,12 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
     <div class="fpiw">
       <div class="fprow">
         <div class="fpti"><div class="fpt" id="fptit">—</div><div class="fpar">YouVin</div></div>
-        <button class="fpic" title="Favorit"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
+        <button class="fpic" id="fpfav" title="Favorit" onclick="toggleFav()"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
+        <button class="fpic" id="fpshuf" title="Zufällig" onclick="toggleShuffle()"><svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></button>
         <button class="fpic" title="Mehr"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
       </div>
     </div>
+    <div class="fpq" id="fpq"></div>
     <div class="fppg">
       <div class="fptr" id="fptr"><div class="fpf" id="fpf" style="width:0%"></div></div>
       <div class="fpts"><span id="fpcur">0:00</span><span id="fpdur">0:00</span></div>
@@ -618,7 +638,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
     <div class="fpbt">
       <button class="fpic" title="Text"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM7 9h10v2H7zm6 5H7v-2h6zm4-6H7V6h10z"/></svg></button>
       <span class="fpdev">YouVin</span>
-      <button class="fpic" title="Zufällig" onclick="playRandom()" style="position:relative"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg><span class="fpbadge"><svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></span></button>
+      <button class="fpic" title="Warteschlange" onclick="toggleQ()"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg></button>
     </div>
   </div>
 </div>
@@ -1323,6 +1343,7 @@ async function playS(idx, plId) {
     });
   }
   rerender();
+  syncFpUI();
 }
 
 function playRandom() {
@@ -1334,6 +1355,34 @@ function playRandom() {
   playS(idx, null);
 }
 
+let shuffleOn = false;
+function toggleShuffle(){ shuffleOn=!shuffleOn; syncFpUI(); }
+function favPl(){ let pl=playlists.find(p=>p.name==='Favoriten'); if(!pl){ pl={id:'fav'+Date.now(),name:'Favoriten',songs:[]}; playlists.push(pl); } return pl; }
+function toggleFav(){
+  if(curIdx<0||!songs[curIdx]) return;
+  const pl=favPl(); const fn=songs[curIdx].filename;
+  const i=pl.songs.indexOf(fn);
+  if(i>=0) pl.songs.splice(i,1); else pl.songs.push(fn);
+  savePlaylists(); syncFpUI();
+}
+function toggleQ(){ const fp=document.getElementById('fp'); fp.classList.toggle('qmode', !fp.classList.contains('qmode')); syncFpUI(); }
+function syncFpUI(){
+  const f=document.getElementById('fpfav'), sh=document.getElementById('fpshuf');
+  const pl=playlists.find(p=>p.name==='Favoriten'); const cur=songs[curIdx];
+  if(f) f.classList.toggle('on', !!(pl && cur && pl.songs.includes(cur.filename)));
+  if(sh) sh.classList.toggle('on', shuffleOn);
+  const q=document.getElementById('fpq');
+  if(q && document.getElementById('fp').classList.contains('qmode')) renderQ(q);
+}
+function renderQ(box){
+  const esc=t=>String(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const list = curQueue ? curQueue.map(f=>songs.findIndex(x=>x.filename===f)).filter(i=>i>=0) : songs.map((_,i)=>i);
+  box.innerHTML = '<div class="fpqh">Wiedergabe fortsetzen</div>' + list.map(i=>{
+    const s=songs[i];
+    return '<div class="fpqr'+(i===curIdx?' cur':'')+'" data-i="'+i+'"><div class="fpqth"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div><div class="fpqtx"><div class="fpqt">'+esc(s.title||s.filename)+'</div><div class="fpqs">'+esc((s.ext||'').toUpperCase())+'</div></div></div>';
+  }).join('');
+  box.querySelectorAll('.fpqr').forEach(r=>r.onclick=()=>playS(+r.dataset.i,null));
+}
 function togPlay()  { aud.paused ? aud.play() : aud.pause(); }
 
 function prevS() {
@@ -1344,6 +1393,7 @@ function prevS() {
 }
 
 function nextInQueue() {
+  if (shuffleOn) { const pool=(curQueue ? curQueue.map(f=>songs.findIndex(x=>x.filename===f)) : songs.map((_,i)=>i)).filter(i=>i>=0 && i!==curIdx); if (pool.length) { playS(pool[Math.floor(Math.random()*pool.length)], null); return; } }
   if (curQueue) {
     const i = curQueue.indexOf(songs[curIdx]?.filename);
     if (i>=0 && i<curQueue.length-1) {
