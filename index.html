@@ -294,7 +294,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 .fc svg{width:30px;height:30px;fill:#fff;}
 .fc.pl{width:70px;height:70px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.3);}
 .fc.pl svg{fill:#000;width:34px;height:34px;}
-.fpvl{padding:0 28px calc(var(--sb)+56px);margin-top:12px;display:flex;align-items:center;gap:10px;}
+.fpvl{padding:0 28px calc(var(--sb)+120px);margin-top:12px;display:flex;align-items:center;gap:10px;}
 .fpvl svg{width:18px;height:18px;fill:rgba(255,255,255,.4);}
 .vtr{flex:1;height:5px;background:rgba(255,255,255,.2);border-radius:99px;cursor:pointer;}
 .vf{height:100%;background:rgba(255,255,255,.5);border-radius:99px;width:80%;transition:width .05s;}
@@ -567,7 +567,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
     <div class="fpn">
       <button class="fpdb" onclick="closeFP()"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
       <span class="fpnl">Wird abgespielt</span>
-      <div style="width:32px;"></div>
+      <button class="fpdb" onclick="playRandom()" title="Zufällig"><svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></button>
     </div>
     <div class="fpaw"><div class="fpa"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div></div>
     <div class="fpiw"><div class="fpt" id="fptit">—</div><div class="fpar">YouVin</div></div>
@@ -1288,6 +1288,15 @@ async function playS(idx, plId) {
     });
   }
   rerender();
+}
+
+function playRandom() {
+  if (!songs.length) return;
+  let idx = 0;
+  if (songs.length > 1) {
+    do { idx = Math.floor(Math.random() * songs.length); } while (idx === curIdx);
+  }
+  playS(idx, null);
 }
 
 function togPlay()  { aud.paused ? aud.play() : aud.pause(); }
