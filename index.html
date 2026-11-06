@@ -375,9 +375,8 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 /* FULL PLAYER — favorites, shuffle, queue list */
 #fpfav svg{fill:rgba(255,255,255,.45);}
 #fpfav.on svg{fill:#fff;}
-#fpshuf svg{fill:rgba(255,255,255,.45);}
-#fpshuf.on{background:rgba(255,255,255,.2);border-radius:50%;}
-#fpshuf.on svg{fill:#fff;}
+#fpshuf{background:rgba(255,255,255,.18);border-radius:50%;width:40px;height:40px;padding:0;}
+#fpshuf svg{fill:#fff;}
 .fpq{display:none;flex:1;min-height:0;overflow-y:auto;padding:12px 28px 0;}
 #fp.qmode .fpq{display:block;}
 #fp.qmode .fpaw{display:none;}
@@ -389,6 +388,10 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 .fpqt{font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .fpqr.cur .fpqt{color:#ff2d55;}
 .fpqs{font-size:13px;color:rgba(255,255,255,.5);margin-top:2px;}
+
+/* ALBUM ART — lighter, like reference */
+.fpa{background:#4c4c50;}
+.fpa svg{fill:rgba(255,255,255,.3);}
 </style>
 </head>
 <body>
