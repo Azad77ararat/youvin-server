@@ -392,6 +392,13 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 /* ALBUM ART — lighter, like reference */
 .fpa{background:#4c4c50;}
 .fpa svg{fill:rgba(255,255,255,.3);}
+
+/* SEEK + SHUFFLE STATE */
+.fptr.scrubbing .fpf{transition:none;}
+#fpshuf{background:rgba(255,255,255,.12);border-radius:50%;width:40px;height:40px;padding:0;}
+#fpshuf svg{fill:rgba(255,255,255,.5);}
+#fpshuf.on{background:#fff;}
+#fpshuf.on svg{fill:#000;}
 </style>
 </head>
 <body>
@@ -1450,7 +1457,7 @@ function updIco() {
   }
 }
 function updProg(){
-  if(!aud.duration)return;
+  if(!aud.duration || scrubbing)return;
   const pct=(aud.currentTime/aud.duration)*100;
   document.getElementById('mpf').style.width=pct+'%';
   document.getElementById('fpf').style.width=pct+'%';
@@ -1487,13 +1494,11 @@ function setupSeek(id) {
     if (!aud.duration) return;
     scrubbing = true;
     el.classList.add('scrubbing');
-    aud.currentTime = getPct(clientX) * aud.duration;
     updateScrubUI(getPct(clientX));
   }
 
   function moveScrub(clientX) {
     if (!scrubbing || !aud.duration) return;
-    aud.currentTime = getPct(clientX) * aud.duration;
     updateScrubUI(getPct(clientX));
   }
 
