@@ -716,7 +716,10 @@ const FMTS = [
 const hdrs = () => ({'Content-Type':'application/json','X-API-Key':API_KEY});
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-const aud = document.getElementById('aud');
+let aud = document.getElementById('aud');
+let aud2 = new Audio();
+aud2.preload = 'auto';
+let preIdx = -1;
 let curUser = null;
 let songs   = [];       // [{filename,title,ext,size}]
 let playlists = [];     // [{id,name,songs:[filename,...]}]
@@ -790,6 +793,61 @@ function showStorageWall() {
   sheet.addEventListener('click', e => { if(e.target===sheet) sheet.remove(); });
 }
 
+// ── DUAL AUDIO: next track is preloaded in aud2 and swapped in when the current one ends ──
+function bindAud(el) {
+  const g = fn => e => { if (el === aud) fn(e); };
+  el.addEventListener('timeupdate', g(onTime));
+  el.addEventListener('ended', g(onEnded));
+  el.addEventListener('loadedmetadata', g(onMeta));
+  el.addEventListener('play', g(() => { playing=true;  updIco(); rerender(); }));
+  el.addEventListener('pause', g(() => { playing=false; updIco(); rerender(); }));
+}
+function srcFor(s) {
+  return s.url || `${SERVER}/play/${curUser.id}/${encodeURIComponent(s.filename)}?key=${API_KEY}`;
+}
+function pickNextIdx() {
+  if (shuffleOn) {
+    const pool = (curQueue ? curQueue.map(f=>songs.findIndex(x=>x.filename===f)) : songs.map((_,i)=>i)).filter(i=>i>=0 && i!==curIdx);
+    return pool.length ? pool[Math.floor(Math.random()*pool.length)] : -1;
+  }
+  if (curQueue) {
+    const i = curQueue.indexOf(songs[curIdx]?.filename);
+    if (i>=0 && i<curQueue.length-1) return songs.findIndex(x=>x.filename===curQueue[i+1]);
+    return -1;
+  }
+  return (curIdx>=0 && curIdx<songs.length-1) ? curIdx+1 : -1;
+}
+function preloadNext() {
+  preIdx = pickNextIdx();
+  if (preIdx<0 || !songs[preIdx]) { preIdx=-1; aud2.removeAttribute('src'); return; }
+  aud2.src = srcFor(songs[preIdx]);
+  aud2.load();
+}
+function showCurrentUI() {
+  const s = songs[curIdx];
+  if (!s) return;
+  document.getElementById('mptit').textContent = s.title;
+  document.getElementById('mpsubt').textContent = s.ext?s.ext.toUpperCase():'—';
+  document.getElementById('fptit').textContent = s.title;
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: s.title||s.filename, artist:'YouVin', album:'YouVin Music' });
+  }
+  rerender();
+  syncFpUI();
+}
+function onEnded() {
+  if (preIdx>=0 && aud2.src) {
+    const old = aud; aud = aud2; aud2 = old;
+    curIdx = preIdx; preIdx = -1;
+    old.pause(); old.removeAttribute('src'); old.load();
+    aud.play().catch(e => console.warn('play error', e));
+    showCurrentUI();
+    preloadNext();
+  } else {
+    nextInQueue();
+  }
+}
+
 // drag state
 let dragSrc = null, dragSrcIdx = -1, dragContainer = null;
 
@@ -798,11 +856,8 @@ window.onload = () => {
   buildFmts();
   setupSeek('mptr'); setupSeek('fptr');
   setupVol();
-  aud.addEventListener('timeupdate', onTime);
-  aud.addEventListener('ended',      nextInQueue);
-  aud.addEventListener('loadedmetadata', onMeta);
-  aud.addEventListener('play',  () => { playing=true;  updIco(); rerender(); });
-  aud.addEventListener('pause', () => { playing=false; updIco(); rerender(); });
+  bindAud(aud);
+  bindAud(aud2);
   const saved = localStorage.getItem('youvin_user');
   if (saved) { curUser = JSON.parse(saved); showApp(); }
   else document.getElementById('auth').classList.add('show');
@@ -1331,12 +1386,13 @@ async function playS(idx, plId) {
   const s = songs[idx];
   // play directly via URL — no pre-fetch needed
   // Play directly from R2 (no proxy needed)
-  aud.src = s.url || `${SERVER}/play/${curUser.id}/${encodeURIComponent(s.filename)}?key=${API_KEY}`;
-  try { await aud.play(); } catch(e) { console.warn('play error',e); }
   document.getElementById('mptit').textContent = s.title;
   document.getElementById('mpsubt').textContent = s.ext?s.ext.toUpperCase():'—';
   document.getElementById('fptit').textContent  = s.title;
   document.getElementById('mp').classList.add('show');
+  aud.src = s.url || `${SERVER}/play/${curUser.id}/${encodeURIComponent(s.filename)}?key=${API_KEY}`;
+  aud.play().catch(e => console.warn('play error', e));
+  preloadNext();
   // Media Session API — enables headphone buttons + lock screen controls
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -1366,7 +1422,7 @@ function playRandom() {
 }
 
 let shuffleOn = false;
-function toggleShuffle(){ shuffleOn=!shuffleOn; syncFpUI(); }
+function toggleShuffle(){ shuffleOn=!shuffleOn; syncFpUI(); preloadNext(); }
 function favPl(){ let pl=playlists.find(p=>p.name==='Favoriten'); if(!pl){ pl={id:'fav'+Date.now(),name:'Favoriten',songs:[]}; playlists.push(pl); } return pl; }
 function toggleFav(){
   if(curIdx<0||!songs[curIdx]) return;
