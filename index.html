@@ -793,6 +793,20 @@ function showStorageWall() {
   sheet.addEventListener('click', e => { if(e.target===sheet) sheet.remove(); });
 }
 
+let _mediaArt = null;
+function mediaArt() {
+  if (_mediaArt) return _mediaArt;
+  try {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+    const x = c.getContext('2d');
+    x.fillStyle = '#2e2e32'; x.fillRect(0, 0, 512, 512);
+    x.translate(136, 136); x.scale(10, 10);
+    x.fillStyle = '#8e8e93';
+    x.fill(new Path2D('M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z'));
+    _mediaArt = [{ src: c.toDataURL('image/png'), sizes: '512x512', type: 'image/png' }];
+  } catch (e) { _mediaArt = []; }
+  return _mediaArt;
+}
 // ── DUAL AUDIO: next track is preloaded in aud2 and swapped in when the current one ends ──
 function bindAud(el) {
   const g = fn => e => { if (el === aud) fn(e); };
@@ -830,7 +844,7 @@ function showCurrentUI() {
   document.getElementById('mpsubt').textContent = s.ext?s.ext.toUpperCase():'—';
   document.getElementById('fptit').textContent = s.title;
   if ('mediaSession' in navigator) {
-    navigator.mediaSession.metadata = new MediaMetadata({ title: s.title||s.filename, artist:'YouVin', album:'YouVin Music' });
+    navigator.mediaSession.metadata = new MediaMetadata({ title: s.title||s.filename, artist:'YouVin', album: 'YouVin Music', artwork: mediaArt() });
   }
   rerender();
   syncFpUI();
@@ -1398,7 +1412,7 @@ async function playS(idx, plId) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: s.title || s.filename,
       artist: 'YouVin',
-      album: 'YouVin Music'
+      album: 'YouVin Music', artwork: mediaArt()
     });
     navigator.mediaSession.setActionHandler('play', () => { aud.play(); updIco(); });
     navigator.mediaSession.setActionHandler('pause', () => { aud.pause(); updIco(); });
