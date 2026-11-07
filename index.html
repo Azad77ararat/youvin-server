@@ -814,7 +814,11 @@ function mediaArt() {
 // ── DUAL AUDIO: next track is preloaded in aud2 and swapped in when the current one ends ──
 function bindAud(el) {
   const g = fn => e => { if (el === aud) fn(e); };
-  el.addEventListener('timeupdate', g(onTime));
+  el.addEventListener('timeupdate', g(e => {
+    const p = !aud.paused;
+    if (p !== playing) { playing = p; updIco(); rerender(); }
+    onTime(e);
+  }));
   el.addEventListener('ended', g(onEnded));
   el.addEventListener('loadedmetadata', g(onMeta));
   el.addEventListener('play', g(() => { playing=true;  updIco(); rerender(); }));
@@ -835,7 +839,9 @@ function pickNextIdx() {
   }
   return (curIdx>=0 && curIdx<songs.length-1) ? curIdx+1 : -1;
 }
+const DUAL_AUDIO = false; // test switch: false = no second player (for comparing the background cut-off)
 function preloadNext() {
+  if (!DUAL_AUDIO) { preIdx = -1; aud2.removeAttribute('src'); return; }
   preIdx = pickNextIdx();
   if (preIdx<0 || !songs[preIdx]) { preIdx=-1; aud2.removeAttribute('src'); return; }
   aud2.src = srcFor(songs[preIdx]);
