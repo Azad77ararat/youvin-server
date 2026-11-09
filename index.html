@@ -403,6 +403,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 /* PLAY TILES — only the playing song is red */
 .ri{background:#3a3a3c;}
 .ri.acc{background:var(--accent);}
+.sw-act.off{background:#30d158;}
 </style>
 </head>
 <body>
@@ -811,6 +812,83 @@ function mediaArt() {
   } catch (e) { _mediaArt = []; }
   return _mediaArt;
 }
+// ── OFFLINE SONGS (saved on this phone, per user) ─────────────────────────────
+let localUrls = {};
+function offDb() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('youvin-offline', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('files');
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function offPut(key, blob) {
+  const db = await offDb();
+  return new Promise((res, rej) => {
+    const t = db.transaction('files', 'readwrite');
+    t.objectStore('files').put(blob, key);
+    t.oncomplete = () => res(); t.onerror = () => rej(t.error);
+  });
+}
+async function offDel(key) {
+  const db = await offDb();
+  return new Promise((res, rej) => {
+    const t = db.transaction('files', 'readwrite');
+    t.objectStore('files').delete(key);
+    t.oncomplete = () => res(); t.onerror = () => rej(t.error);
+  });
+}
+async function offLoadMine() {
+  const db = await offDb();
+  return new Promise((res, rej) => {
+    const t = db.transaction('files', 'readonly');
+    const st = t.objectStore('files');
+    const keys = st.getAllKeys(), vals = st.getAll();
+    t.oncomplete = () => {
+      const pre = curUser.id + '|', out = {};
+      keys.result.forEach((k, i) => { if (String(k).startsWith(pre)) out[String(k).slice(pre.length)] = vals.result[i]; });
+      res(out);
+    };
+    t.onerror = () => rej(t.error);
+  });
+}
+async function loadOffline() {
+  try {
+    const blobs = await offLoadMine();
+    Object.keys(blobs).forEach(fn => { localUrls[fn] = URL.createObjectURL(blobs[fn]); });
+  } catch (e) { console.warn('offline load', e); }
+}
+function isOff(s) { return !!(s && localUrls[s.filename]); }
+async function fetchOffline(s) {
+  const r = await fetch(s.url);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const blob = await r.blob();
+  await offPut(curUser.id + '|' + s.filename, blob);
+  if (localUrls[s.filename]) URL.revokeObjectURL(localUrls[s.filename]);
+  localUrls[s.filename] = URL.createObjectURL(blob);
+}
+async function toggleOffline(idx) {
+  const s = songs[idx];
+  if (!s) return;
+  closeAllSwipes();
+  try {
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+    if (isOff(s)) {
+      URL.revokeObjectURL(localUrls[s.filename]); delete localUrls[s.filename];
+      await offDel(curUser.id + '|' + s.filename);
+    } else {
+      await fetchOffline(s);
+    }
+  } catch (e) {
+    alert('Download fehlgeschlagen. Bitte Internetverbindung prüfen.');
+  }
+  renderLib();
+  syncFpUI();
+}
+function srcFor(s) {
+  return localUrls[s.filename] || s.url || `${SERVER}/play/${curUser.id}/${encodeURIComponent(s.filename)}?key=${API_KEY}`;
+}
+
 // ── DUAL AUDIO: next track is preloaded in aud2 and swapped in when the current one ends ──
 function bindAud(el) {
   const g = fn => e => { if (el === aud) fn(e); };
@@ -823,9 +901,6 @@ function bindAud(el) {
   el.addEventListener('loadedmetadata', g(onMeta));
   el.addEventListener('play', g(() => { playing=true;  updIco(); rerender(); }));
   el.addEventListener('pause', g(() => { playing=false; updIco(); rerender(); }));
-}
-function srcFor(s) {
-  return s.url || `${SERVER}/play/${curUser.id}/${encodeURIComponent(s.filename)}?key=${API_KEY}`;
 }
 function pickNextIdx() {
   if (shuffleOn) {
@@ -941,6 +1016,7 @@ function goTab(id) {
 // ── LIBRARY ───────────────────────────────────────────────────────────────────
 async function loadLib() {
   if (!curUser) return;
+  await loadOffline();
   document.getElementById('lload').style.display = 'block';
   document.getElementById('lemp').style.display  = 'none';
   document.getElementById('owarn').style.display = 'none';
@@ -1004,7 +1080,7 @@ function renderSongs(arr, container, plId) {
   arr.forEach((s, localIdx) => {
     const globalIdx = songs.indexOf(s);
     const act = globalIdx === curIdx;
-    const ACTION_W = 210; // 3 × 70px
+    const ACTION_W = 280; // 4 × 70px
 
     const sw = document.createElement('div');
     sw.className = 'sw-wrap';
@@ -1016,6 +1092,7 @@ function renderSongs(arr, container, plId) {
     acts.innerHTML = `
       <div class="sw-act mpl" onclick="openPlPick(${globalIdx})"><svg viewBox="0 0 24 24"><path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"/></svg><span>Playlist</span></div>
       <div class="sw-act ren" onclick="openRnSong(${globalIdx})"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg><span>Umbenennen</span></div>
+      <div class="sw-act off" onclick="toggleOffline(${globalIdx})"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg><span>${isOff(s) ? 'Entfernen' : 'Offline'}</span></div>
       <div class="sw-act del" onclick="${plId ? `removeSongFromPl('${plId}',${globalIdx})` : `delSong('${s.filename}',${globalIdx})`}"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg><span>${plId ? 'Entfernen' : 'Löschen'}</span></div>
     `;
 
@@ -1034,7 +1111,7 @@ function renderSongs(arr, container, plId) {
       </div>
       <div class="rb" onclick="playS(${globalIdx},${plId?`'${plId}'`:null})">
         <div class="rt">${esc(s.title)}</div>
-        <div class="rs">${s.ext ? s.ext.toUpperCase() : '—'}</div>
+        <div class="rs">${s.ext ? s.ext.toUpperCase() : '—'}${isOff(s) ? ' · Offline' : ''}</div>
       </div>
     `;
 
@@ -1401,6 +1478,7 @@ function doRename() {
   if (renIdx<0) return;
   const old = songs[renIdx].filename;
   const ri = renIdx;
+  const wasOff = isOff(songs[renIdx]);
   songs[renIdx].title = nv;
   localStorage.setItem('youvin_lib_'+curUser.id, JSON.stringify(songs));
   rerender(); closeRn();
@@ -1409,6 +1487,10 @@ function doRename() {
       if(!d.ok||!songs[ri]) return;
       const newFn=d.filename;
       songs[ri].filename=newFn; songs[ri].url=d.url;
+      if (wasOff) {
+        URL.revokeObjectURL(localUrls[old]); delete localUrls[old];
+        offDel(curUser.id+'|'+old).then(()=>fetchOffline(songs[ri])).then(()=>renderLib()).catch(()=>{});
+      }
       playlists.forEach(p=>{ p.songs=(p.songs||[]).map(f=>f===old?newFn:f); });
       savePlaylists();
       localStorage.setItem('youvin_lib_'+curUser.id, JSON.stringify(songs));
@@ -1428,7 +1510,7 @@ async function playS(idx, plId) {
   document.getElementById('mpsubt').textContent = s.ext?s.ext.toUpperCase():'—';
   document.getElementById('fptit').textContent  = s.title;
   document.getElementById('mp').classList.add('show');
-  aud.src = s.url || `${SERVER}/play/${curUser.id}/${encodeURIComponent(s.filename)}?key=${API_KEY}`;
+  aud.src = srcFor(s);
   aud.play().catch(e => console.warn('play error', e));
   preloadNext();
   // Media Session API — enables headphone buttons + lock screen controls
