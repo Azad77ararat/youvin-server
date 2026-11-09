@@ -830,7 +830,12 @@ function srcFor(s) {
 function pickNextIdx() {
   if (shuffleOn) {
     const pool = (curQueue ? curQueue.map(f=>songs.findIndex(x=>x.filename===f)) : songs.map((_,i)=>i)).filter(i=>i>=0 && i!==curIdx);
-    return pool.length ? pool[Math.floor(Math.random()*pool.length)] : -1;
+    let rem = pool.filter(i=>!shufPlayed.includes(i));
+    if (!rem.length) { shufPlayed = curIdx>=0 ? [curIdx] : []; rem = pool; }
+    if (!rem.length) return -1;
+    const pick = rem[Math.floor(Math.random()*rem.length)];
+    shufPlayed.push(pick);
+    return pick;
   }
   if (curQueue) {
     const i = curQueue.indexOf(songs[curIdx]?.filename);
@@ -1022,7 +1027,7 @@ function renderSongs(arr, container, plId) {
       <div class="drag-handle" title="Gedrückt halten und ziehen">
         <svg viewBox="0 0 24 24"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
       </div>
-      <div class="ri${act?' acc':''}">
+      <div class="ri${act?' acc':''}" onclick="${act?'togPlay()':`playS(${globalIdx},${plId?`'${plId}'`:null})`}">
         ${act && playing
           ? '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'
           : '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'}
@@ -1395,10 +1400,19 @@ function doRename() {
   }
   if (renIdx<0) return;
   const old = songs[renIdx].filename;
+  const ri = renIdx;
   songs[renIdx].title = nv;
   localStorage.setItem('youvin_lib_'+curUser.id, JSON.stringify(songs));
   rerender(); closeRn();
-  fetch(`${SERVER}/rename`,{method:'POST',headers:hdrs(),body:JSON.stringify({user:curUser.id,filename:old,newTitle:nv})}).catch(()=>{});
+  fetch(`${SERVER}/rename`,{method:'POST',headers:hdrs(),body:JSON.stringify({user:curUser.id,old:old,new:nv})})
+    .then(r=>r.json()).then(d=>{
+      if(!d.ok||!songs[ri]) return;
+      const newFn=d.filename;
+      songs[ri].filename=newFn; songs[ri].url=d.url;
+      playlists.forEach(p=>{ p.songs=(p.songs||[]).map(f=>f===old?newFn:f); });
+      savePlaylists();
+      localStorage.setItem('youvin_lib_'+curUser.id, JSON.stringify(songs));
+    }).catch(()=>{});
 }
 
 // ── PLAYBACK ──────────────────────────────────────────────────────────────────
@@ -1446,7 +1460,8 @@ function playRandom() {
 }
 
 let shuffleOn = false;
-function toggleShuffle(){ shuffleOn=!shuffleOn; syncFpUI(); preloadNext(); }
+let shufPlayed = [];
+function toggleShuffle(){ shuffleOn=!shuffleOn; shufPlayed = curIdx>=0 ? [curIdx] : []; syncFpUI(); preloadNext(); }
 function favPl(){ let pl=playlists.find(p=>p.name==='Favoriten'); if(!pl){ pl={id:'fav'+Date.now(),name:'Favoriten',songs:[]}; playlists.push(pl); } return pl; }
 function toggleFav(){
   if(curIdx<0||!songs[curIdx]) return;
@@ -1483,7 +1498,7 @@ function prevS() {
 }
 
 function nextInQueue() {
-  if (shuffleOn) { const pool=(curQueue ? curQueue.map(f=>songs.findIndex(x=>x.filename===f)) : songs.map((_,i)=>i)).filter(i=>i>=0 && i!==curIdx); if (pool.length) { playS(pool[Math.floor(Math.random()*pool.length)], null); return; } }
+  if (shuffleOn) { const i = pickNextIdx(); if (i>=0) { playS(i, null); return; } }
   if (curQueue) {
     const i = curQueue.indexOf(songs[curIdx]?.filename);
     if (i>=0 && i<curQueue.length-1) {
