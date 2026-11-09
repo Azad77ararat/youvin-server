@@ -1,46 +1,29 @@
-// Service Worker — بيخزّن واجهة YouVin بشكل دائم عشان تفتح حتى بدون إنترنت أبداً
-const CACHE_NAME = 'youvin-shell-v2';
-const SHELL_FILES = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
-];
+// YouVin service worker: keeps the app page available without internet.
+const CACHE = 'youvin-shell-v1';
+const SHELL = new URL('./index.html', self.registration.scope).href;
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', e => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      cache.addAll(SHELL_FILES.map((f) => new Request(f, { cache: 'reload' })))
-    )
-  );
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll([SHELL, self.registration.scope]).catch(() => {})));
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(names.filter(n => n !== CACHE_NAME).map(n => caches.delete(n)))
-    )
-  );
-  self.clients.claim();
+self.addEventListener('activate', e => {
+  e.waitUntil(self.clients.claim());
 });
 
-// استراتيجية: جرّب الشبكة أول (عشان تاخدي آخر تحديث)، لو فشلت (ما فيه نت) استخدمي النسخة المخزّنة
-// مهم: cache: 'no-store' يجبر تجاوز ذاكرة HTTP العادية للمتصفح، عشان دايماً نجيب آخر
-// نسخة فعلية من GitHub Pages ومش نسخة قديمة محفوظة محلياً بالخطأ
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-  // بس لملفات الواجهة نفسها (مش لطلبات السيرفر تبع الأغاني عبر Tailscale)
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  // Only the app page itself. API, R2 audio and everything else go straight to the network.
   if (url.origin !== self.location.origin) return;
-
-  event.respondWith(
-    fetch(event.request, { cache: 'no-store' })
-      .then((res) => {
-        const resClone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+  if (req.mode !== 'navigate' && url.href !== SHELL && url.href !== self.registration.scope) return;
+  e.respondWith(
+    fetch(req)
+      .then(res => {
+        if (res.ok) caches.open(CACHE).then(c => c.put(SHELL, res.clone()));
         return res;
       })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
+      .catch(() => caches.match(SHELL).then(r => r || Response.error()))
   );
 });
