@@ -213,7 +213,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 .plv-title{font-size:18px;font-weight:700;flex:1;}
 .plv-more{width:34px;height:34px;border-radius:50%;background:var(--fill2);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 .plv-more svg{width:20px;height:20px;fill:var(--label);}
-.plv-scroll{overflow-y:auto;height:calc(100% - 80px);padding-bottom:calc(var(--sb)+90px);}
+.plv-scroll{overflow-y:auto;height:calc(100% - 80px);padding-bottom:calc(var(--sb)+150px);}
 
 /* Context menu */
 .ctx-menu{position:fixed;background:var(--bg2);border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.6);z-index:400;overflow:hidden;min-width:200px;transform:scale(.8);opacity:0;transition:transform .15s,opacity .15s;pointer-events:none;}
@@ -246,7 +246,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 .ppill{padding:6px 14px;border-radius:99px;border:none;font-size:13px;font-weight:600;color:#fff;cursor:pointer;}
 
 /* MINI PLAYER — sits above the nav bar */
-#mp{position:fixed;bottom:calc(env(safe-area-inset-bottom,34px) + 56px);left:0;right:0;background:rgba(28,28,30,.97);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid var(--sep);border-radius:0;box-shadow:0 -4px 20px rgba(0,0,0,.4);z-index:49;overflow:hidden;display:none;}
+#mp{position:fixed;bottom:calc(env(safe-area-inset-bottom,34px) + 56px);left:0;right:0;background:rgba(28,28,30,.97);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid var(--sep);border-radius:0;box-shadow:0 -4px 20px rgba(0,0,0,.4);z-index:160;overflow:hidden;display:none;}
 #mp.show{display:block;}
 .mpm{display:flex;align-items:center;gap:12px;padding:10px 12px 6px;cursor:pointer;}
 .mpa{width:42px;height:42px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -1099,7 +1099,14 @@ function renderLib() {
   updateStorBar();
 }
 
-function rerender() { renderSongs(songs, document.getElementById('slist'), null); buildHomeRec(); }
+function rerender() {
+  renderSongs(songs, document.getElementById('slist'), null);
+  buildHomeRec();
+  if (curPlId) {
+    const pl = playlists.find(p=>p.id===curPlId);
+    if (pl) renderSongs(getSongsInPl(pl), document.getElementById('plv-list'), curPlId);
+  }
+}
 
 // ── RENDER SONGS (Drag & Drop + Swipe) ────────────────────────────────────────
 function renderSongs(arr, container, plId) {
@@ -1175,8 +1182,31 @@ function renderSongs(arr, container, plId) {
 
     // ── DRAG & DROP logic ──────────────────────────────────────────
     // touch-based drag for iOS
-    let touchDrag = false, ghost = null, dragY = 0, hoverWrap = null;
+    let touchDrag = false, ghost = null, dragY = 0, hoverWrap = null, scrollEl = null, scrollRaf = null;
     const handle = row.querySelector('.drag-handle');
+
+    const updateDragTarget = () => {
+      if (!ghost) return;
+      ghost.style.display = 'none';
+      const el = document.elementFromPoint(dragLastX, dragLastY);
+      ghost.style.display = '';
+      const tw = el?.closest('.sw-wrap');
+      if (hoverWrap && hoverWrap !== tw) hoverWrap.classList.remove('drag-over');
+      if (tw && tw !== sw) { tw.classList.add('drag-over'); hoverWrap = tw; }
+      else hoverWrap = null;
+    };
+    const autoScrollTick = () => {
+      scrollRaf = null;
+      if (!touchDrag || !scrollEl) return;
+      const isDoc = scrollEl === document.scrollingElement || scrollEl === document.documentElement;
+      const r = isDoc ? {top:0, bottom: window.innerHeight} : scrollEl.getBoundingClientRect();
+      const edge = 90, maxStep = 14;
+      let step = 0;
+      if (dragLastY < r.top + edge) step = -maxStep * Math.min(1, (r.top + edge - dragLastY) / edge);
+      else if (dragLastY > r.bottom - edge) step = maxStep * Math.min(1, (dragLastY - (r.bottom - edge)) / edge);
+      if (step) { scrollEl.scrollTop += step; updateDragTarget(); }
+      scrollRaf = requestAnimationFrame(autoScrollTick);
+    };
 
     handle.addEventListener('touchstart', e => {
       touchDrag = true;
@@ -1191,27 +1221,26 @@ function renderSongs(arr, container, plId) {
       ghost.style.top  = (t.clientY - 30) + 'px';
       document.body.appendChild(ghost);
       sw.classList.add('dragging');
+      dragLastX = t.clientX; dragLastY = t.clientY;
+      scrollEl = scrollParentOf(sw);
+      if (!scrollRaf) scrollRaf = requestAnimationFrame(autoScrollTick);
       e.preventDefault();
     },{passive:false});
 
     handle.addEventListener('touchmove', e => {
       if (!touchDrag || !ghost) return;
       const t = e.touches[0];
+      dragLastX = t.clientX; dragLastY = t.clientY;
       ghost.style.left = (t.clientX - 20) + 'px';
       ghost.style.top  = (t.clientY - 30) + 'px';
-      // find element under finger
-      ghost.style.display = 'none';
-      const el = document.elementFromPoint(t.clientX, t.clientY);
-      ghost.style.display = '';
-      const targetWrap = el?.closest('.sw-wrap');
-      if (hoverWrap && hoverWrap !== targetWrap) hoverWrap.classList.remove('drag-over');
-      if (targetWrap && targetWrap !== sw) { targetWrap.classList.add('drag-over'); hoverWrap = targetWrap; }
+      updateDragTarget();
       e.preventDefault();
     },{passive:false});
 
     handle.addEventListener('touchend', e => {
       if (!touchDrag) return;
       touchDrag = false;
+      if (scrollRaf) { cancelAnimationFrame(scrollRaf); scrollRaf = null; }
       if (ghost) { ghost.remove(); ghost = null; }
       sw.classList.remove('dragging');
       if (hoverWrap) { hoverWrap.classList.remove('drag-over'); }
@@ -1252,9 +1281,35 @@ function renderSongs(arr, container, plId) {
   container.appendChild(wrap);
 }
 
+// ── Auto-scroll while dragging near the top/bottom edge ──
+let dragLastX = 0, dragLastY = 0;
+function scrollParentOf(el) {
+  let p = el.parentElement;
+  while (p && p !== document.body) {
+    const oy = getComputedStyle(p).overflowY;
+    if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight) return p;
+    p = p.parentElement;
+  }
+  return document.scrollingElement || document.documentElement;
+}
+
 // ── REORDER ───────────────────────────────────────────────────────────────────
 function doReorder(arr, from, to, plId) {
   if (from === to) return;
+  if (plId) {
+    const pl = playlists.find(p=>p.id===plId);
+    const moveFn = arr[from]?.filename, targetFn = arr[to]?.filename;
+    if (pl && moveFn && targetFn) {
+      const a = pl.songs.indexOf(moveFn);
+      if (a >= 0) {
+        pl.songs.splice(a, 1);
+        const b = pl.songs.indexOf(targetFn);
+        pl.songs.splice(b >= 0 ? b : pl.songs.length, 0, moveFn);
+      }
+    }
+    savePlaylists();
+    return;
+  }
   const [item] = arr.splice(from, 1);
   arr.splice(to, 0, item);
   // update curIdx if needed
@@ -1529,11 +1584,11 @@ function doRename() {
 }
 
 // ── PLAYBACK ──────────────────────────────────────────────────────────────────
-async function playS(idx, plId) {
+async function playS(idx, plId, keepQueue) {
   if (idx<0||idx>=songs.length) return;
   curIdx = idx;
   if (plId) { const pl = playlists.find(p=>p.id===plId); curQueue = pl?.songs || null; }
-  else curQueue = null;
+  else if (!keepQueue) curQueue = null;
   const s = songs[idx];
   // play directly via URL — no pre-fetch needed
   // Play directly from R2 (no proxy needed)
@@ -1599,27 +1654,27 @@ function renderQ(box){
     const s=songs[i];
     return '<div class="fpqr'+(i===curIdx?' cur':'')+'" data-i="'+i+'"><div class="fpqth"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></div><div class="fpqtx"><div class="fpqt">'+esc(s.title||s.filename)+'</div><div class="fpqs">'+esc((s.ext||'').toUpperCase())+'</div></div></div>';
   }).join('');
-  box.querySelectorAll('.fpqr').forEach(r=>r.onclick=()=>playS(+r.dataset.i,null));
+  box.querySelectorAll('.fpqr').forEach(r=>r.onclick=()=>playS(+r.dataset.i,null,true));
 }
 function togPlay()  { aud.paused ? aud.play() : aud.pause(); }
 
 function prevS() {
   if (curQueue) {
     const i = curQueue.indexOf(songs[curIdx]?.filename);
-    if (i>0) { const s=songs.find(x=>x.filename===curQueue[i-1]); if(s) playS(songs.indexOf(s),null); }
-  } else { if (curIdx>0) playS(curIdx-1,null); }
+    if (i>0) { const s=songs.find(x=>x.filename===curQueue[i-1]); if(s) playS(songs.indexOf(s),null,true); }
+  } else { if (curIdx>0) playS(curIdx-1,null,true); }
 }
 
 function nextInQueue() {
-  if (shuffleOn) { const i = pickNextIdx(); if (i>=0) { playS(i, null); return; } }
+  if (shuffleOn) { const i = pickNextIdx(); if (i>=0) { playS(i, null, true); return; } }
   if (curQueue) {
     const i = curQueue.indexOf(songs[curIdx]?.filename);
     if (i>=0 && i<curQueue.length-1) {
       const s=songs.find(x=>x.filename===curQueue[i+1]);
-      if(s) { playS(songs.indexOf(s), null); return; }
+      if(s) { playS(songs.indexOf(s), null, true); return; }
     }
   } else {
-    if (curIdx>=0 && curIdx<songs.length-1) { playS(curIdx+1, null); return; }
+    if (curIdx>=0 && curIdx<songs.length-1) { playS(curIdx+1, null, true); return; }
   }
   // end of list — stop cleanly
   playing=false; updIco(); rerender();
