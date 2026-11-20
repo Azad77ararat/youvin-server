@@ -101,7 +101,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 
 /* ── DRAG & DROP SONG ROW ──────────────────────────────────────── */
 .il{margin:0 16px 24px;background:none;}
-.sw-wrap{position:relative;overflow:hidden;border-radius:14px;margin-bottom:8px;touch-action:pan-y;}
+.sw-wrap{position:relative;overflow:hidden;border-radius:14px;margin-bottom:8px;touch-action:pan-y;transition:transform .2s cubic-bezier(.25,.46,.45,.94);}
 .sw-wrap.drag-over{background:rgba(255,45,85,.12);}
 .sw-wrap.dragging{opacity:.4;}
 
@@ -1191,15 +1191,31 @@ function renderSongs(arr, container, plId) {
     row.appendChild(grip);
     const on = (ev, fn, opt) => row.querySelectorAll('.drag-handle').forEach(h => h.addEventListener(ev, fn, opt));
 
+    let startFy = 0, dragH = 0, targetIdx = localIdx;
+    const contentY = clientY => {
+      const r = (scrollEl && scrollEl !== document.scrollingElement && scrollEl !== document.documentElement)
+        ? scrollEl.getBoundingClientRect() : {top: 0};
+      return clientY - r.top + (scrollEl ? scrollEl.scrollTop : 0);
+    };
+    // rows between the old and new slot slide aside, the dragged row moves to the new slot
+    const previewShift = to => {
+      container.querySelectorAll('.sw-wrap').forEach(w => {
+        const i = parseInt(w.dataset.idx);
+        let y = 0;
+        if (to > localIdx && i > localIdx && i <= to) y = -dragH;
+        else if (to < localIdx && i >= to && i < localIdx) y = dragH;
+        w.style.transform = y ? `translateY(${y}px)` : '';
+      });
+    };
+    const clearShift = () => {
+      container.querySelectorAll('.sw-wrap').forEach(w => { w.style.transform = ''; });
+    };
     const updateDragTarget = () => {
-      if (!ghost) return;
-      ghost.style.display = 'none';
-      const el = document.elementFromPoint(dragLastX, dragLastY);
-      ghost.style.display = '';
-      const tw = el?.closest('.sw-wrap');
-      if (hoverWrap && hoverWrap !== tw) hoverWrap.classList.remove('drag-over');
-      if (tw && tw !== sw) { tw.classList.add('drag-over'); hoverWrap = tw; }
-      else hoverWrap = null;
+      if (!ghost || !dragH) return;
+      const n = arr.length;
+      const delta = Math.round((contentY(dragLastY) - startFy) / dragH);
+      const next = Math.max(0, Math.min(n - 1, localIdx + delta));
+      if (next !== targetIdx) { targetIdx = next; previewShift(next); }
     };
     const autoScrollTick = () => {
       scrollRaf = null;
@@ -1229,6 +1245,11 @@ function renderSongs(arr, container, plId) {
       sw.classList.add('dragging');
       dragLastX = t.clientX; dragLastY = t.clientY;
       scrollEl = scrollParentOf(sw);
+      const ws = container.querySelectorAll('.sw-wrap');
+      dragH = ws.length > 1 ? (ws[1].offsetTop - ws[0].offsetTop) : sw.offsetHeight;
+      if (!dragH || dragH <= 0) dragH = sw.offsetHeight;
+      startFy = contentY(t.clientY);
+      targetIdx = localIdx;
       if (!scrollRaf) scrollRaf = requestAnimationFrame(autoScrollTick);
       e.preventDefault();
     },{passive:false});
@@ -1249,15 +1270,8 @@ function renderSongs(arr, container, plId) {
       if (scrollRaf) { cancelAnimationFrame(scrollRaf); scrollRaf = null; }
       if (ghost) { ghost.remove(); ghost = null; }
       sw.classList.remove('dragging');
-      if (hoverWrap) { hoverWrap.classList.remove('drag-over'); }
-      const t = e.changedTouches[0];
-      ghost && (ghost.style.display='none');
-      const el = document.elementFromPoint(t.clientX, t.clientY);
-      const targetWrap = el?.closest('.sw-wrap');
-      if (targetWrap && targetWrap !== sw) {
-        const toIdx = parseInt(targetWrap.dataset.idx);
-        if (!isNaN(toIdx)) doReorder(arr, localIdx, toIdx, plId);
-      }
+      clearShift();
+      if (targetIdx !== localIdx) doReorder(arr, localIdx, targetIdx, plId);
       hoverWrap = null;
     });
 
