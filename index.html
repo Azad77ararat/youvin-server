@@ -17,7 +17,7 @@
 <script>
 // Auto-update: wenn neue Version auf Server, Seite neu laden
 (function(){
-  const APP_VER='4.1';
+  const APP_VER='4.2';
   const stored=localStorage.getItem('youvin_app_ver');
   if(stored && stored!==APP_VER){
     localStorage.setItem('youvin_app_ver',APP_VER);
@@ -117,7 +117,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
 .sw-row.playing{background:rgba(255,45,85,.08);}
 
 /* drag handle */
-.drag-handle{width:28px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:grab;touch-action:none;}
+.drag-handle{width:28px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:grab;touch-action:pan-y;}
 .drag-handle:active{cursor:grabbing;}
 .drag-handle svg{width:18px;height:18px;fill:var(--label4);}
 .drag-grip{position:absolute;right:0;top:0;bottom:0;width:56px;height:auto;z-index:2;background:transparent;cursor:grab;}
@@ -1230,11 +1230,15 @@ function renderSongs(arr, container, plId) {
       scrollRaf = requestAnimationFrame(autoScrollTick);
     };
 
-    on('touchstart', e => {
+    // Drag starts only after a deliberate hold on the handle. A finger that
+    // moves before the hold completes is a normal page scroll and is left alone.
+    let holdTimer = null, holdX0 = 0, holdY0 = 0;
+    const HOLD_MS = 280, HOLD_SLOP = 10;
+    const cancelHold = () => { if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; } };
+    const startDrag = t => {
       touchDrag = true;
       dragSrcIdx = localIdx;
       dragContainer = {arr, container, plId};
-      const t = e.touches[0];
       // create ghost
       ghost = document.createElement('div');
       ghost.className = 'drag-ghost';
@@ -1251,11 +1255,26 @@ function renderSongs(arr, container, plId) {
       startFy = contentY(t.clientY);
       targetIdx = localIdx;
       if (!scrollRaf) scrollRaf = requestAnimationFrame(autoScrollTick);
-      e.preventDefault();
-    },{passive:false});
+    };
+
+    on('touchstart', e => {
+      const t = e.touches[0];
+      holdX0 = t.clientX; holdY0 = t.clientY;
+      cancelHold();
+      holdTimer = setTimeout(() => {
+        holdTimer = null;
+        if (navigator.vibrate) navigator.vibrate(8);
+        startDrag({clientX: holdX0, clientY: holdY0});
+      }, HOLD_MS);
+    },{passive:true});
 
     on('touchmove', e => {
-      if (!touchDrag || !ghost) return;
+      if (!touchDrag) {
+        const t = e.touches[0];
+        if (Math.hypot(t.clientX - holdX0, t.clientY - holdY0) > HOLD_SLOP) cancelHold();
+        return;
+      }
+      if (!ghost) return;
       const t = e.touches[0];
       dragLastX = t.clientX; dragLastY = t.clientY;
       ghost.style.left = (t.clientX - 20) + 'px';
@@ -1264,7 +1283,8 @@ function renderSongs(arr, container, plId) {
       e.preventDefault();
     },{passive:false});
 
-    on('touchend', e => {
+    const endDrag = () => {
+      cancelHold();
       if (!touchDrag) return;
       touchDrag = false;
       if (scrollRaf) { cancelAnimationFrame(scrollRaf); scrollRaf = null; }
@@ -1273,7 +1293,9 @@ function renderSongs(arr, container, plId) {
       clearShift();
       if (targetIdx !== localIdx) doReorder(arr, localIdx, targetIdx, plId);
       hoverWrap = null;
-    });
+    };
+    on('touchend', endDrag);
+    on('touchcancel', endDrag);
 
     // desktop drag
     row.addEventListener('dragstart', e => {
