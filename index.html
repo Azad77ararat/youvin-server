@@ -17,7 +17,7 @@
 <script>
 // Auto-update: wenn neue Version auf Server, Seite neu laden
 (function(){
-  const APP_VER='5.8';
+  const APP_VER='5.9';
   const stored=localStorage.getItem('youvin_app_ver');
   if(stored && stored!==APP_VER){
     localStorage.setItem('youvin_app_ver',APP_VER);
@@ -1120,10 +1120,12 @@ function ytHint(show, text){
   if (text) h.querySelector('p').textContent = text;
 }
 
-async function ytSearch(q){
+async function ytSearch(q, keepPlayer){
   const res = document.getElementById('ytres');
-  document.getElementById('ytwrap').innerHTML = '';
-  ytCur = null;
+  if (!keepPlayer){
+    document.getElementById('ytwrap').innerHTML = '';
+    ytCur = null;
+  }
   ytShowResults(true);
   ytHint(false);
   res.innerHTML = '<div style="padding:12px;color:var(--label3);font-size:14px;">Suche läuft…</div>';
@@ -1143,9 +1145,16 @@ async function ytSearch(q){
   }
 }
 function ytOpenResult(i){ if (ytResults[i]) ytOpenItem(ytResults[i]); }
+function ytArtistOf(channel){
+  return String(channel||'').replace(/\s*-\s*Topic$/i,'').replace(/VEVO$/i,'').trim();
+}
 function ytOpenSaved(id){
   const it = ytSavedGet().find(x=>x.id===id);
-  if (it) ytOpenItem(it);
+  if (!it) return;
+  ytOpenItem(it);
+  // show more songs by the same artist under the player
+  const artist = ytArtistOf(it.channel);
+  if (artist) ytSearch(artist, true);
 }
 
 function ytOpenItem(item){
