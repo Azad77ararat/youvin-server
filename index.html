@@ -17,7 +17,7 @@
 <script>
 // Auto-update: wenn neue Version auf Server, Seite neu laden
 (function(){
-  const APP_VER='5.7';
+  const APP_VER='5.8';
   const stored=localStorage.getItem('youvin_app_ver');
   if(stored && stored!==APP_VER){
     localStorage.setItem('youvin_app_ver',APP_VER);
@@ -1151,7 +1151,7 @@ function ytOpenSaved(id){
 function ytOpenItem(item){
   ytCur = item;
   document.getElementById('ytinp').value = 'https://youtu.be/'+item.id;
-  ytShowResults(false);
+  ytShowResults(ytResults.length>0);
   ytHint(false);
   const saved = ytSavedGet().some(x=>x.id===item.id);
   document.getElementById('ytwrap').innerHTML =
@@ -1171,7 +1171,7 @@ function ytOpenItem(item){
 function ytBack(){
   document.getElementById('ytwrap').innerHTML = '';
   ytCur = null;
-  if (ytResults.length){ ytShowResults(true); ytHint(false); }
+  if (ytResults.length){ ytShowResults(true); ytHint(false); document.getElementById('ytres').scrollIntoView({behavior:'smooth', block:'start'}); }
   else { ytShowResults(false); ytHint(true, 'YouTube suchen oder Link einfügen'); }
 }
 
