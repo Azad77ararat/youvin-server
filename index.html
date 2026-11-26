@@ -17,7 +17,7 @@
 <script>
 // Auto-update: wenn neue Version auf Server, Seite neu laden
 (function(){
-  const APP_VER='5.6';
+  const APP_VER='5.7';
   const stored=localStorage.getItem('youvin_app_ver');
   if(stored && stored!==APP_VER){
     localStorage.setItem('youvin_app_ver',APP_VER);
@@ -575,6 +575,7 @@ body{background:var(--bg);color:var(--label);font-family:-apple-system,'Helvetic
       </div></div>
       <div id="ytwrap" style="margin:12px 16px;"></div>
       <div id="ytres" style="margin:0 16px 16px;"></div>
+      <div id="ytsaved" style="margin:0 16px 24px;"></div>
       <div id="ythint" class="empty" style="padding-top:40px;">
         <svg viewBox="0 0 24 24"><path d="M10 15l5.19-3L10 9v6zm11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg>
         <p>Link eines YouTube-Videos einfügen</p>
@@ -1099,6 +1100,11 @@ function showApp() {
 
 
 // ── YOUTUBE (official embedded player only) ──────────────────────────────────
+let ytCur = null;       // item currently playing
+let ytResults = [];     // last search results
+const YT_SAVE_KEY = 'youvin_yt_saved';
+function ytSavedGet(){ try { return JSON.parse(localStorage.getItem(YT_SAVE_KEY) || '[]'); } catch(e){ return []; } }
+function ytSavedSet(v){ try { localStorage.setItem(YT_SAVE_KEY, JSON.stringify(v)); } catch(e){} }
 function ytParseId(raw){
   const t = (raw||'').trim();
   const m = t.match(/(?:v=|youtu\.be\/|embed\/|shorts\/|live\/)([A-Za-z0-9_-]{11})/);
@@ -1107,18 +1113,27 @@ function ytParseId(raw){
   return null;
 }
 function ytEsc(t){ return String(t||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function ytShowResults(show){ document.getElementById('ytres').style.display = show ? 'block' : 'none'; }
+function ytHint(show, text){
+  const h = document.getElementById('ythint');
+  h.style.display = show ? 'block' : 'none';
+  if (text) h.querySelector('p').textContent = text;
+}
+
 async function ytSearch(q){
   const res = document.getElementById('ytres');
-  const hint = document.getElementById('ythint');
-  hint.style.display='none';
+  document.getElementById('ytwrap').innerHTML = '';
+  ytCur = null;
+  ytShowResults(true);
+  ytHint(false);
   res.innerHTML = '<div style="padding:12px;color:var(--label3);font-size:14px;">Suche läuft…</div>';
   try {
     const r = await fetch(`${SERVER}/yt/search?q=${encodeURIComponent(q)}&key=${API_KEY}`, {signal:AbortSignal.timeout(20000)});
     if (!r.ok) throw new Error('HTTP '+r.status);
-    const items = await r.json();
-    if (!items.length){ res.innerHTML = '<div style="padding:12px;color:var(--label3);font-size:14px;">Keine Ergebnisse</div>'; return; }
-    res.innerHTML = items.map(it =>
-      '<div onclick="ytOpen(\''+ytEsc(it.id)+'\')" style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:.5px solid var(--sep);cursor:pointer;">'+
+    ytResults = await r.json();
+    if (!ytResults.length){ res.innerHTML = '<div style="padding:12px;color:var(--label3);font-size:14px;">Keine Ergebnisse</div>'; return; }
+    res.innerHTML = ytResults.map((it, i) =>
+      '<div onclick="ytOpenResult('+i+')" style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:.5px solid var(--sep);cursor:pointer;">'+
         '<img src="'+ytEsc(it.thumb)+'" alt="" style="width:120px;height:68px;object-fit:cover;border-radius:8px;flex:none;background:#222;">'+
         '<div style="min-width:0;"><div style="font-size:15px;font-weight:600;line-height:1.3;">'+ytEsc(it.title)+'</div>'+
         '<div style="font-size:12px;color:var(--label3);margin-top:4px;">'+ytEsc(it.channel)+'</div></div>'+
@@ -1127,28 +1142,89 @@ async function ytSearch(q){
     res.innerHTML = '<div style="padding:12px;color:var(--label3);font-size:14px;">Suche fehlgeschlagen. Bitte später erneut versuchen.</div>';
   }
 }
-function ytOpen(id){
-  document.getElementById('ytres').innerHTML = '';
-  document.getElementById('ytinp').value = 'https://youtu.be/'+id;
-  ytPlay(id);
+function ytOpenResult(i){ if (ytResults[i]) ytOpenItem(ytResults[i]); }
+function ytOpenSaved(id){
+  const it = ytSavedGet().find(x=>x.id===id);
+  if (it) ytOpenItem(it);
+}
+
+function ytOpenItem(item){
+  ytCur = item;
+  document.getElementById('ytinp').value = 'https://youtu.be/'+item.id;
+  ytShowResults(false);
+  ytHint(false);
+  const saved = ytSavedGet().some(x=>x.id===item.id);
+  document.getElementById('ytwrap').innerHTML =
+    '<div style="position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000;">'+
+      '<iframe src="https://www.youtube-nocookie.com/embed/'+ytEsc(item.id)+'?playsinline=1&rel=0" '+
+      'style="position:absolute;inset:0;width:100%;height:100%;border:0;" '+
+      'allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>'+
+    '<div style="font-size:16px;font-weight:600;margin:10px 0 2px;line-height:1.3;">'+ytEsc(item.title||'YouTube-Video')+'</div>'+
+    '<div style="font-size:12px;color:var(--label3);margin-bottom:10px;">'+ytEsc(item.channel||'')+'</div>'+
+    '<div style="display:flex;gap:10px;">'+
+      '<button onclick="ytBack()" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--bg2);color:var(--label,#fff);font-size:15px;font-weight:600;cursor:pointer;">← Zurück</button>'+
+      '<button id="ytsavebtn" onclick="ytSaveCur()" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:15px;font-weight:600;cursor:pointer;">'+(saved?'Gespeichert ✓':'Speichern')+'</button>'+
+    '</div>';
   document.getElementById('ca').scrollTo(0,0);
 }
-function ytPlay(forcedId){
+
+function ytBack(){
+  document.getElementById('ytwrap').innerHTML = '';
+  ytCur = null;
+  if (ytResults.length){ ytShowResults(true); ytHint(false); }
+  else { ytShowResults(false); ytHint(true, 'YouTube suchen oder Link einfügen'); }
+}
+
+function ytSaveCur(){
+  if (!ytCur) return;
+  const list = ytSavedGet();
+  if (!list.some(x=>x.id===ytCur.id)){
+    list.unshift({id:ytCur.id, title:ytCur.title||'YouTube-Video', channel:ytCur.channel||'', thumb:ytCur.thumb||''});
+    ytSavedSet(list);
+  }
+  const b = document.getElementById('ytsavebtn');
+  if (b) b.textContent = 'Gespeichert ✓';
+  ytRenderSaved();
+}
+function ytRemoveSaved(id){
+  ytSavedSet(ytSavedGet().filter(x=>x.id!==id));
+  ytRenderSaved();
+  if (ytCur && ytCur.id===id){
+    const b = document.getElementById('ytsavebtn');
+    if (b) b.textContent = 'Speichern';
+  }
+}
+function ytRenderSaved(){
+  const box = document.getElementById('ytsaved');
+  const list = ytSavedGet();
+  if (!list.length){ box.innerHTML = ''; return; }
+  box.innerHTML = '<div style="font-size:13px;font-weight:600;color:var(--label3);text-transform:uppercase;letter-spacing:.04em;margin:8px 0;">YouTube</div>' +
+    list.map(it =>
+      '<div onclick="ytOpenSaved(\''+ytEsc(it.id)+'\')" style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:.5px solid var(--sep);cursor:pointer;">'+
+        '<img src="'+ytEsc(it.thumb)+'" alt="" style="width:100px;height:56px;object-fit:cover;border-radius:8px;flex:none;background:#222;">'+
+        '<div style="min-width:0;flex:1;"><div style="font-size:14px;font-weight:600;line-height:1.3;">'+ytEsc(it.title)+'</div>'+
+        '<div style="font-size:12px;color:var(--label3);margin-top:3px;">'+ytEsc(it.channel)+'</div></div>'+
+        '<button onclick="event.stopPropagation();ytRemoveSaved(\''+ytEsc(it.id)+'\')" style="background:none;border:none;color:var(--label3);font-size:20px;padding:6px;cursor:pointer;">×</button>'+
+      '</div>').join('');
+}
+
+function ytPlay(){
   const raw = document.getElementById('ytinp').value;
-  const id = forcedId || ytParseId(raw);
-  if (!id && raw.trim() && !/youtu/i.test(raw)) { ytSearch(raw.trim()); return; }
-  const wrap = document.getElementById('ytwrap');
-  const hint = document.getElementById('ythint');
-  if (!id){ wrap.innerHTML=''; hint.style.display='block'; hint.querySelector('p').textContent='Kein gültiger YouTube-Link'; return; }
-  hint.style.display='none';
-  wrap.innerHTML = '<div style="position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000;">'+
-    '<iframe src="https://www.youtube-nocookie.com/embed/'+id+'?playsinline=1&rel=0" '+
-    'style="position:absolute;inset:0;width:100%;height:100%;border:0;" '+
-    'allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
+  const id = ytParseId(raw);
+  if (!id){
+    if (raw.trim() && !/youtu/i.test(raw)) { ytSearch(raw.trim()); return; }
+    document.getElementById('ytwrap').innerHTML = '';
+    ytShowResults(false);
+    ytHint(true, 'Kein gültiger YouTube-Link');
+    return;
+  }
+  const known = ytSavedGet().find(x=>x.id===id) || ytResults.find(x=>x.id===id) || {id, title:'YouTube-Video', channel:'', thumb:''};
+  ytOpenItem(known);
 }
 document.addEventListener('DOMContentLoaded', ()=>{
   const i = document.getElementById('ytinp');
   if (i) i.addEventListener('keydown', e=>{ if(e.key==='Enter') ytPlay(); });
+  ytRenderSaved();
 });
 
 function goTab(id) {
